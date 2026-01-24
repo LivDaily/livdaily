@@ -115,3 +115,38 @@ export const userProfiles = pgTable('user_profiles', {
   notificationSettings: jsonb('notification_settings'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
+
+// Mindfulness Content - Mindfulness articles, exercises, meditations
+export const mindfulnessContent = pgTable('mindfulness_content', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  title: text('title').notNull(),
+  content: text('content').notNull(),
+  contentType: text('content_type').notNull(), // 'article', 'exercise', 'meditation'
+  aiGenerated: boolean('ai_generated').default(false).notNull(),
+  category: text('category'),
+  duration: integer('duration'),
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull().$onUpdate(() => new Date()).notNull(),
+});
+
+// User Subscriptions - Track user subscription status
+export const userSubscriptions = pgTable('user_subscriptions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  subscriptionType: text('subscription_type').notNull(), // 'free', 'premium'
+  status: text('status').notNull(), // 'active', 'inactive', 'cancelled'
+  startDate: timestamp('start_date').defaultNow().notNull(),
+  endDate: timestamp('end_date'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// Mindfulness Journal Entries - User reflections on mindfulness content
+export const mindfulnessJournalEntries = pgTable('mindfulness_journal_entries', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  mindfulnessContentId: uuid('mindfulness_content_id').references(() => mindfulnessContent.id, { onDelete: 'set null' }),
+  content: text('content').notNull(),
+  mood: text('mood'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
