@@ -14,6 +14,7 @@ import { IconSymbol } from '@/components/IconSymbol';
 import { useAppTheme } from '@/contexts/ThemeContext';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { groundingAPI } from '@/utils/api';
+import { useRouter } from 'expo-router';
 
 interface GroundingSession {
   id: string;
@@ -25,8 +26,9 @@ interface GroundingSession {
 
 export default function GroundingScreen() {
   const { colors } = useAppTheme();
+  const router = useRouter();
   const [sessions, setSessions] = useState<GroundingSession[]>([]);
-  const [selectedType, setSelectedType] = useState<string>('');
+  const [selectedType, setSelectedType] = useState<string>('breathwork');
   const [selectedDuration, setSelectedDuration] = useState<number>(5);
 
   const sessionTypes = [
@@ -43,6 +45,7 @@ export default function GroundingScreen() {
   }, []);
 
   const loadSessions = async () => {
+    console.log('Loading grounding sessions');
     try {
       const data = await groundingAPI.getSessions();
       setSessions(data || []);
@@ -51,24 +54,20 @@ export default function GroundingScreen() {
     }
   };
 
-  const handleStartSession = async () => {
-    if (!selectedType) {
-      Alert.alert('Select Type', 'Please select a session type');
-      return;
-    }
+  const handleStartSession = () => {
+    console.log('User starting grounding session:', { type: selectedType, duration: selectedDuration });
+    router.push({
+      pathname: '/grounding-timer',
+      params: {
+        type: selectedType,
+        duration: selectedDuration.toString(),
+      },
+    });
+  };
 
-    try {
-      await groundingAPI.createSession({
-        sessionType: selectedType,
-        durationMinutes: selectedDuration,
-      });
-
-      Alert.alert('Session Started', `Your ${selectedDuration}-minute ${selectedType} session has begun`);
-      loadSessions();
-    } catch (error) {
-      console.error('Failed to start session:', error);
-      Alert.alert('Error', 'Failed to start session. Please try again.');
-    }
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
   };
 
   const styles = StyleSheet.create({
@@ -214,10 +213,16 @@ export default function GroundingScreen() {
       fontSize: 16,
       fontWeight: '600',
       color: colors.text,
+      textTransform: 'capitalize',
     },
     sessionDuration: {
       fontSize: 14,
       color: colors.textSecondary,
+    },
+    sessionDate: {
+      fontSize: 13,
+      color: colors.textSecondary,
+      marginTop: 4,
     },
     emptyState: {
       alignItems: 'center',
@@ -251,22 +256,26 @@ export default function GroundingScreen() {
             {sessionTypes.map((type) => {
               const isSelected = selectedType === type.id;
               return (
-                <TouchableOpacity
-                  key={type.id}
-                  style={[styles.typeChip, isSelected && styles.typeChipSelected]}
-                  onPress={() => setSelectedType(type.id)}
-                  activeOpacity={0.7}
-                >
-                  <IconSymbol
-                    ios_icon_name={type.icon}
-                    android_material_icon_name={type.androidIcon}
-                    size={16}
-                    color={isSelected ? '#FFFFFF' : colors.text}
-                  />
-                  <Text style={[styles.typeChipText, isSelected && styles.typeChipTextSelected]}>
-                    {type.label}
-                  </Text>
-                </TouchableOpacity>
+                <React.Fragment key={type.id}>
+                  <TouchableOpacity
+                    style={[styles.typeChip, isSelected && styles.typeChipSelected]}
+                    onPress={() => {
+                      console.log('User selected session type:', type.id);
+                      setSelectedType(type.id);
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <IconSymbol
+                      ios_icon_name={type.icon}
+                      android_material_icon_name={type.androidIcon}
+                      size={16}
+                      color={isSelected ? '#FFFFFF' : colors.text}
+                    />
+                    <Text style={[styles.typeChipText, isSelected && styles.typeChipTextSelected]}>
+                      {type.label}
+                    </Text>
+                  </TouchableOpacity>
+                </React.Fragment>
               );
             })}
           </View>
@@ -275,17 +284,22 @@ export default function GroundingScreen() {
           <View style={styles.durationGrid}>
             {durations.map((duration) => {
               const isSelected = selectedDuration === duration;
+              const durationText = `${duration} min`;
               return (
-                <TouchableOpacity
-                  key={duration}
-                  style={[styles.durationChip, isSelected && styles.durationChipSelected]}
-                  onPress={() => setSelectedDuration(duration)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[styles.durationChipText, isSelected && styles.durationChipTextSelected]}>
-                    {duration} min
-                  </Text>
-                </TouchableOpacity>
+                <React.Fragment key={duration}>
+                  <TouchableOpacity
+                    style={[styles.durationChip, isSelected && styles.durationChipSelected]}
+                    onPress={() => {
+                      console.log('User selected duration:', duration);
+                      setSelectedDuration(duration);
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.durationChipText, isSelected && styles.durationChipTextSelected]}>
+                      {durationText}
+                    </Text>
+                  </TouchableOpacity>
+                </React.Fragment>
               );
             })}
           </View>
@@ -314,18 +328,24 @@ export default function GroundingScreen() {
               </Text>
             </View>
           ) : (
-            sessions.map((session, index) => (
-              <Animated.View
-                key={session.id}
-                entering={FadeInDown.delay(index * 100).duration(600)}
-                style={styles.sessionCard}
-              >
-                <View style={styles.sessionHeader}>
-                  <Text style={styles.sessionType}>{session.sessionType}</Text>
-                  <Text style={styles.sessionDuration}>{session.durationMinutes} min</Text>
-                </View>
-              </Animated.View>
-            ))
+            sessions.map((session, index) => {
+              const formattedDate = formatDate(session.completedAt);
+              const durationText = `${session.durationMinutes} min`;
+              return (
+                <React.Fragment key={session.id}>
+                  <Animated.View
+                    entering={FadeInDown.delay(index * 100).duration(600)}
+                    style={styles.sessionCard}
+                  >
+                    <View style={styles.sessionHeader}>
+                      <Text style={styles.sessionType}>{session.sessionType}</Text>
+                      <Text style={styles.sessionDuration}>{durationText}</Text>
+                    </View>
+                    <Text style={styles.sessionDate}>{formattedDate}</Text>
+                  </Animated.View>
+                </React.Fragment>
+              );
+            })
           )}
         </View>
       </ScrollView>

@@ -18,6 +18,7 @@ import { IconSymbol } from '@/components/IconSymbol';
 import { useAppTheme } from '@/contexts/ThemeContext';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { journalAPI, aiAPI } from '@/utils/api';
+import { useRouter } from 'expo-router';
 
 function resolveImageSource(source: string | number | ImageSourcePropType | undefined): ImageSourcePropType {
   if (!source) return { uri: '' };
@@ -36,6 +37,7 @@ interface JournalEntry {
 
 export default function JournalScreen() {
   const { colors } = useAppTheme();
+  const router = useRouter();
   const [isWriting, setIsWriting] = useState(false);
   const [journalContent, setJournalContent] = useState('');
   const [selectedMood, setSelectedMood] = useState('');
@@ -93,7 +95,6 @@ export default function JournalScreen() {
       if (response?.prompt) {
         setAiPrompt(response.prompt);
       } else {
-        // Fallback prompts
         const prompts = [
           'What are you noticing in your body right now?',
           'What would feel supportive today?',
@@ -106,7 +107,6 @@ export default function JournalScreen() {
       }
     } catch (error) {
       console.error('Failed to generate AI prompt:', error);
-      // Fallback prompts
       const prompts = [
         'What are you noticing in your body right now?',
         'What would feel supportive today?',
@@ -169,6 +169,11 @@ export default function JournalScreen() {
     setSelectedEnergy('');
   };
 
+  const handleGrounding = () => {
+    console.log('User tapped grounding button from journal');
+    router.push('/(tabs)/grounding');
+  };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -198,6 +203,28 @@ export default function JournalScreen() {
       fontSize: 16,
       color: colors.textSecondary,
       lineHeight: 24,
+    },
+    groundingButton: {
+      marginHorizontal: 24,
+      marginTop: 12,
+      backgroundColor: colors.secondary,
+      borderRadius: 16,
+      paddingVertical: 14,
+      paddingHorizontal: 20,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 8,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.08,
+      shadowRadius: 12,
+      elevation: 3,
+    },
+    groundingButtonText: {
+      fontSize: 15,
+      fontWeight: '600',
+      color: colors.text,
     },
     promptCard: {
       marginHorizontal: 24,
@@ -405,6 +432,26 @@ export default function JournalScreen() {
             </Text>
           </Animated.View>
 
+          <Animated.View entering={FadeInDown.delay(100).duration(600)}>
+            <TouchableOpacity
+              style={styles.groundingButton}
+              onPress={handleGrounding}
+              activeOpacity={0.7}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel="Go to grounding exercises"
+              accessibilityHint="Navigate to grounding timer and breathwork"
+            >
+              <IconSymbol
+                ios_icon_name="wind"
+                android_material_icon_name="air"
+                size={20}
+                color={colors.text}
+              />
+              <Text style={styles.groundingButtonText}>Take a Grounding Break</Text>
+            </TouchableOpacity>
+          </Animated.View>
+
           {!isWriting ? (
             <Animated.View entering={FadeInDown.delay(200).duration(600)} style={styles.promptCard}>
               <Text style={styles.promptLabel}>Today&apos;s Prompt</Text>
@@ -424,25 +471,26 @@ export default function JournalScreen() {
                 {moods.map((mood) => {
                   const isSelected = selectedMood === mood.id;
                   return (
-                    <TouchableOpacity
-                      key={mood.id}
-                      style={[styles.moodChip, isSelected && styles.moodChipSelected]}
-                      onPress={() => {
-                        console.log('User selected mood:', mood.id);
-                        setSelectedMood(mood.id);
-                      }}
-                      activeOpacity={0.7}
-                    >
-                      <IconSymbol
-                        ios_icon_name={mood.icon}
-                        android_material_icon_name={mood.androidIcon}
-                        size={16}
-                        color={isSelected ? '#FFFFFF' : colors.text}
-                      />
-                      <Text style={[styles.moodChipText, isSelected && styles.moodChipTextSelected]}>
-                        {mood.label}
-                      </Text>
-                    </TouchableOpacity>
+                    <React.Fragment key={mood.id}>
+                      <TouchableOpacity
+                        style={[styles.moodChip, isSelected && styles.moodChipSelected]}
+                        onPress={() => {
+                          console.log('User selected mood:', mood.id);
+                          setSelectedMood(mood.id);
+                        }}
+                        activeOpacity={0.7}
+                      >
+                        <IconSymbol
+                          ios_icon_name={mood.icon}
+                          android_material_icon_name={mood.androidIcon}
+                          size={16}
+                          color={isSelected ? '#FFFFFF' : colors.text}
+                        />
+                        <Text style={[styles.moodChipText, isSelected && styles.moodChipTextSelected]}>
+                          {mood.label}
+                        </Text>
+                      </TouchableOpacity>
+                    </React.Fragment>
                   );
                 })}
               </View>
@@ -452,25 +500,26 @@ export default function JournalScreen() {
                 {energyLevels.map((energy) => {
                   const isSelected = selectedEnergy === energy.id;
                   return (
-                    <TouchableOpacity
-                      key={energy.id}
-                      style={[styles.moodChip, isSelected && styles.moodChipSelected]}
-                      onPress={() => {
-                        console.log('User selected energy level:', energy.id);
-                        setSelectedEnergy(energy.id);
-                      }}
-                      activeOpacity={0.7}
-                    >
-                      <IconSymbol
-                        ios_icon_name={energy.icon}
-                        android_material_icon_name={energy.androidIcon}
-                        size={16}
-                        color={isSelected ? '#FFFFFF' : colors.text}
-                      />
-                      <Text style={[styles.moodChipText, isSelected && styles.moodChipTextSelected]}>
-                        {energy.label}
-                      </Text>
-                    </TouchableOpacity>
+                    <React.Fragment key={energy.id}>
+                      <TouchableOpacity
+                        style={[styles.moodChip, isSelected && styles.moodChipSelected]}
+                        onPress={() => {
+                          console.log('User selected energy level:', energy.id);
+                          setSelectedEnergy(energy.id);
+                        }}
+                        activeOpacity={0.7}
+                      >
+                        <IconSymbol
+                          ios_icon_name={energy.icon}
+                          android_material_icon_name={energy.androidIcon}
+                          size={16}
+                          color={isSelected ? '#FFFFFF' : colors.text}
+                        />
+                        <Text style={[styles.moodChipText, isSelected && styles.moodChipTextSelected]}>
+                          {energy.label}
+                        </Text>
+                      </TouchableOpacity>
+                    </React.Fragment>
                   );
                 })}
               </View>

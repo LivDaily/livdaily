@@ -13,6 +13,8 @@ import {
   Alert,
 } from 'react-native';
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'expo-router';
+import { mindfulnessAPI } from '@/utils/api';
 
 interface MindfulnessContent {
   id: string;
@@ -34,6 +36,7 @@ interface Subscription {
 
 export default function MindfulnessScreen() {
   const { colors } = useAppTheme();
+  const router = useRouter();
   const [content, setContent] = useState<MindfulnessContent[]>([]);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [loading, setLoading] = useState(true);
@@ -46,15 +49,21 @@ export default function MindfulnessScreen() {
     console.log('Loading mindfulness content and subscription');
     setLoading(true);
     try {
-      // TODO: Backend Integration - GET /api/mindfulness/content to fetch mindfulness content
-      // TODO: Backend Integration - GET /api/mindfulness/subscription to fetch subscription status
+      const [contentData, subscriptionData] = await Promise.all([
+        mindfulnessAPI.getContent(),
+        mindfulnessAPI.getSubscription(),
+      ]);
       
-      // Mock data for now
+      setContent(contentData || []);
+      setSubscription(subscriptionData || { subscriptionType: 'free', status: 'active' });
+    } catch (error) {
+      console.error('Failed to load mindfulness data:', error);
+      
       const mockContent: MindfulnessContent[] = [
         {
           id: '1',
           title: 'Morning Meditation',
-          content: 'Start your day with a peaceful 10-minute guided meditation...',
+          content: 'Start your day with a peaceful 10-minute guided meditation. Find a comfortable seat, close your eyes, and focus on your breath. Let thoughts pass like clouds in the sky.',
           contentType: 'meditation',
           category: 'morning',
           duration: 10,
@@ -64,7 +73,7 @@ export default function MindfulnessScreen() {
         {
           id: '2',
           title: 'Breathing Exercise',
-          content: 'A simple breathing technique to center yourself...',
+          content: 'A simple breathing technique to center yourself. Inhale for 4 counts, hold for 4, exhale for 4, hold for 4. Repeat this cycle 5 times.',
           contentType: 'breathing',
           category: 'anytime',
           duration: 5,
@@ -74,7 +83,7 @@ export default function MindfulnessScreen() {
         {
           id: '3',
           title: 'Evening Wind Down',
-          content: 'Gentle practices to prepare for restful sleep...',
+          content: 'Gentle practices to prepare for restful sleep. Release the day with body scan meditation, progressive muscle relaxation, and gratitude reflection.',
           contentType: 'meditation',
           category: 'evening',
           duration: 15,
@@ -83,16 +92,8 @@ export default function MindfulnessScreen() {
         },
       ];
 
-      const mockSubscription: Subscription = {
-        subscriptionType: 'free',
-        status: 'active',
-      };
-
       setContent(mockContent);
-      setSubscription(mockSubscription);
-    } catch (error) {
-      console.error('Failed to load mindfulness data:', error);
-      Alert.alert('Error', 'Failed to load mindfulness content');
+      setSubscription({ subscriptionType: 'free', status: 'active' });
     } finally {
       setLoading(false);
     }
@@ -100,10 +101,23 @@ export default function MindfulnessScreen() {
 
   const handleContentPress = (item: MindfulnessContent) => {
     console.log('User tapped mindfulness content:', item.title);
+    
+    const durationText = item.duration ? `${item.duration} minutes` : '';
+    const categoryText = item.category.charAt(0).toUpperCase() + item.category.slice(1);
+    
     Alert.alert(
       item.title,
-      item.content,
-      [{ text: 'Close', style: 'cancel' }]
+      `${categoryText} • ${durationText}\n\n${item.content}`,
+      [
+        { text: 'Close', style: 'cancel' },
+        {
+          text: 'Begin Practice',
+          onPress: () => {
+            console.log('User starting mindfulness practice:', item.title);
+            Alert.alert('Practice Started', 'Find a comfortable position and begin when ready.');
+          },
+        },
+      ]
     );
   };
 
@@ -111,7 +125,7 @@ export default function MindfulnessScreen() {
     console.log('User tapped upgrade to premium');
     Alert.alert(
       'Upgrade to Premium',
-      'Unlock all mindfulness content and features with a premium subscription.',
+      'Unlock all mindfulness content and features with a premium subscription.\n\n• Unlimited guided meditations\n• Exclusive breathing exercises\n• Personalized content\n• Offline access\n• Ad-free experience',
       [
         { text: 'Cancel', style: 'cancel' },
         { text: 'Learn More', onPress: () => console.log('Navigate to subscription page') },
@@ -316,46 +330,46 @@ export default function MindfulnessScreen() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Available Content</Text>
-          {content.map((item, index) => (
-            <React.Fragment key={item.id}>
-              <Animated.View entering={FadeInDown.delay(200 + index * 100).duration(600)}>
-                <TouchableOpacity
-                  style={styles.contentCard}
-                  onPress={() => handleContentPress(item)}
-                  activeOpacity={0.7}
-                  accessible={true}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${item.title}, ${item.duration} minutes`}
-                  accessibilityHint="Tap to view content details"
-                >
-                  <View style={styles.contentHeader}>
-                    <Text style={styles.contentTitle}>{item.title}</Text>
-                    {item.duration && (
-                      <View style={styles.durationBadge}>
-                        <Text style={styles.durationText}>
-                          {item.duration}
-                          <Text> min</Text>
-                        </Text>
-                      </View>
-                    )}
-                  </View>
-                  <Text style={styles.contentDescription} numberOfLines={2}>
-                    {item.content}
-                  </Text>
-                  <View style={styles.contentFooter}>
-                    <View style={styles.categoryBadge}>
-                      <Text style={styles.categoryText}>{item.category}</Text>
+          {content.map((item, index) => {
+            const durationText = item.duration ? `${item.duration} min` : '';
+            return (
+              <React.Fragment key={item.id}>
+                <Animated.View entering={FadeInDown.delay(200 + index * 100).duration(600)}>
+                  <TouchableOpacity
+                    style={styles.contentCard}
+                    onPress={() => handleContentPress(item)}
+                    activeOpacity={0.7}
+                    accessible={true}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${item.title}, ${item.duration} minutes`}
+                    accessibilityHint="Tap to view content details and begin practice"
+                  >
+                    <View style={styles.contentHeader}>
+                      <Text style={styles.contentTitle}>{item.title}</Text>
+                      {item.duration && (
+                        <View style={styles.durationBadge}>
+                          <Text style={styles.durationText}>{durationText}</Text>
+                        </View>
+                      )}
                     </View>
-                    {item.aiGenerated && (
+                    <Text style={styles.contentDescription} numberOfLines={2}>
+                      {item.content}
+                    </Text>
+                    <View style={styles.contentFooter}>
                       <View style={styles.categoryBadge}>
-                        <Text style={styles.categoryText}>AI Generated</Text>
+                        <Text style={styles.categoryText}>{item.category}</Text>
                       </View>
-                    )}
-                  </View>
-                </TouchableOpacity>
-              </Animated.View>
-            </React.Fragment>
-          ))}
+                      {item.aiGenerated && (
+                        <View style={styles.categoryBadge}>
+                          <Text style={styles.categoryText}>AI Generated</Text>
+                        </View>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                </Animated.View>
+              </React.Fragment>
+            );
+          })}
         </View>
       </ScrollView>
     </SafeAreaView>

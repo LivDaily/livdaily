@@ -102,6 +102,51 @@ export default function ProfileScreen() {
     );
   };
 
+  const handleAccessibilitySettings = () => {
+    console.log('User tapped Accessibility Settings');
+    Alert.alert(
+      'Accessibility Settings',
+      'Configure accessibility features:\n\n• Adjustable font sizes\n• Screen reader compatibility\n• High contrast mode\n• Reduced motion\n• Voice control support',
+      [{ text: 'Close', style: 'cancel' }]
+    );
+  };
+
+  const handleNotifications = () => {
+    console.log('User tapped Presence Notifications');
+    Alert.alert(
+      'Presence Notifications',
+      'Manage your gentle reminders:\n\n• Morning arrival cues\n• Midday grounding prompts\n• Evening wind-down reminders\n• Custom notification times\n• Notification frequency',
+      [{ text: 'Close', style: 'cancel' }]
+    );
+  };
+
+  const handleTracking = () => {
+    console.log('User tapped Tracking Preferences');
+    Alert.alert(
+      'Tracking Preferences',
+      'Control your wellness tracking:\n\n• Movement tracking\n• Nutrition logging\n• Sleep patterns\n• Journal insights\n• Daily rhythm tracking\n\nAll tracking is optional and can be turned off anytime.',
+      [{ text: 'Close', style: 'cancel' }]
+    );
+  };
+
+  const handlePrivacy = () => {
+    console.log('User tapped Privacy Settings');
+    Alert.alert(
+      'Privacy Settings',
+      'Your data, your control:\n\n• What data we collect and why\n• How tracking works\n• Turn tracking off\n• Delete account data\n• Export your data\n• Manage permissions\n\nYour privacy and emotional safety are our priority.',
+      [{ text: 'Close', style: 'cancel' }]
+    );
+  };
+
+  const handleSupport = () => {
+    console.log('User tapped Support');
+    Alert.alert(
+      'Support & Help',
+      'We\'re here to help:\n\n• Frequently asked questions\n• Contact support team\n• Report an issue\n• Feature requests\n• Community guidelines\n• Terms of service',
+      [{ text: 'Close', style: 'cancel' }]
+    );
+  };
+
   const styles = StyleSheet.create({
     container: {
       flex: 1,
@@ -362,12 +407,55 @@ export default function ProfileScreen() {
               accessible={true}
               accessibilityRole="header"
             >
+              Accessibility
+            </Text>
+            <Animated.View entering={FadeInDown.delay(250).duration(600)}>
+              <TouchableOpacity 
+                style={styles.card} 
+                activeOpacity={0.7}
+                onPress={handleAccessibilitySettings}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel="Accessibility settings"
+                accessibilityHint="Double tap to configure accessibility features"
+              >
+                <View style={styles.settingRow}>
+                  <View style={styles.settingLeft}>
+                    <IconSymbol
+                      ios_icon_name="accessibility"
+                      android_material_icon_name="accessibility"
+                      size={24}
+                      color={colors.primary}
+                    />
+                    <View>
+                      <Text style={styles.settingText}>Accessibility Features</Text>
+                      <Text style={styles.settingSubtext}>Font size, screen reader, contrast</Text>
+                    </View>
+                  </View>
+                  <IconSymbol
+                    ios_icon_name="chevron.right"
+                    android_material_icon_name="chevron-right"
+                    size={20}
+                    color={colors.textSecondary}
+                  />
+                </View>
+              </TouchableOpacity>
+            </Animated.View>
+          </View>
+
+          <View style={styles.section}>
+            <Text 
+              style={styles.sectionTitle}
+              accessible={true}
+              accessibilityRole="header"
+            >
               Wellness Tools
             </Text>
             <Animated.View entering={FadeInDown.delay(300).duration(600)}>
               <TouchableOpacity 
                 style={styles.card} 
                 activeOpacity={0.7}
+                onPress={handleNotifications}
                 accessible={true}
                 accessibilityRole="button"
                 accessibilityLabel="Presence notifications settings"
@@ -383,7 +471,7 @@ export default function ProfileScreen() {
                     />
                     <View>
                       <Text style={styles.settingText}>Presence Notifications</Text>
-                      <Text style={styles.settingSubtext}>Gentle reminders</Text>
+                      <Text style={styles.settingSubtext}>Gentle reminders throughout your day</Text>
                     </View>
                   </View>
                   <IconSymbol
@@ -400,6 +488,7 @@ export default function ProfileScreen() {
               <TouchableOpacity 
                 style={styles.card} 
                 activeOpacity={0.7}
+                onPress={handleTracking}
                 accessible={true}
                 accessibilityRole="button"
                 accessibilityLabel="Tracking preferences"
@@ -415,7 +504,7 @@ export default function ProfileScreen() {
                     />
                     <View>
                       <Text style={styles.settingText}>Tracking Preferences</Text>
-                      <Text style={styles.settingSubtext}>Optional & supportive</Text>
+                      <Text style={styles.settingSubtext}>Optional wellness tracking controls</Text>
                     </View>
                   </View>
                   <IconSymbol
@@ -441,6 +530,7 @@ export default function ProfileScreen() {
               <TouchableOpacity 
                 style={styles.card} 
                 activeOpacity={0.7}
+                onPress={handlePrivacy}
                 accessible={true}
                 accessibilityRole="button"
                 accessibilityLabel="Privacy settings"
@@ -456,7 +546,7 @@ export default function ProfileScreen() {
                     />
                     <View>
                       <Text style={styles.settingText}>Privacy Settings</Text>
-                      <Text style={styles.settingSubtext}>Your data, your control</Text>
+                      <Text style={styles.settingSubtext}>Data control, permissions, export</Text>
                     </View>
                   </View>
                   <IconSymbol
@@ -470,6 +560,39 @@ export default function ProfileScreen() {
             </Animated.View>
 
             <Animated.View entering={FadeInDown.delay(450).duration(600)}>
+              <TouchableOpacity 
+                style={styles.card} 
+                activeOpacity={0.7}
+                onPress={handleSupport}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel="Support and help"
+                accessibilityHint="Double tap to get help and contact support"
+              >
+                <View style={styles.settingRow}>
+                  <View style={styles.settingLeft}>
+                    <IconSymbol
+                      ios_icon_name="questionmark.circle"
+                      android_material_icon_name="help"
+                      size={24}
+                      color={colors.primary}
+                    />
+                    <View>
+                      <Text style={styles.settingText}>Support & Help</Text>
+                      <Text style={styles.settingSubtext}>FAQ, contact us, report issues</Text>
+                    </View>
+                  </View>
+                  <IconSymbol
+                    ios_icon_name="chevron.right"
+                    android_material_icon_name="chevron-right"
+                    size={20}
+                    color={colors.textSecondary}
+                  />
+                </View>
+              </TouchableOpacity>
+            </Animated.View>
+
+            <Animated.View entering={FadeInDown.delay(500).duration(600)}>
               <TouchableOpacity 
                 style={styles.card} 
                 activeOpacity={0.7}
@@ -511,7 +634,7 @@ export default function ProfileScreen() {
               >
                 Admin
               </Text>
-              <Animated.View entering={FadeInDown.delay(450).duration(600)}>
+              <Animated.View entering={FadeInDown.delay(550).duration(600)}>
                 <TouchableOpacity 
                   style={styles.card} 
                   activeOpacity={0.7}
@@ -558,7 +681,7 @@ export default function ProfileScreen() {
               Account
             </Text>
             {user && (
-              <Animated.View entering={FadeInDown.delay(500).duration(600)}>
+              <Animated.View entering={FadeInDown.delay(600).duration(600)}>
                 <View 
                   style={styles.card}
                   accessible={true}
@@ -582,7 +705,7 @@ export default function ProfileScreen() {
               </Animated.View>
             )}
 
-            <Animated.View entering={FadeInDown.delay(550).duration(600)}>
+            <Animated.View entering={FadeInDown.delay(650).duration(600)}>
               <TouchableOpacity 
                 style={[styles.card, { backgroundColor: '#FF3B30' }]} 
                 activeOpacity={0.7}
