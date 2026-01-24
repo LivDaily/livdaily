@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { Platform } from "react-native";
 import { authClient, storeWebBearerToken } from "@/lib/auth";
@@ -31,6 +32,8 @@ function openOAuthPopup(provider: string): Promise<string> {
     const left = window.screenX + (window.outerWidth - width) / 2;
     const top = window.screenY + (window.outerHeight - height) / 2;
 
+    console.log(`Opening OAuth popup for ${provider}:`, popupUrl);
+
     const popup = window.open(
       popupUrl,
       "oauth-popup",
@@ -38,19 +41,24 @@ function openOAuthPopup(provider: string): Promise<string> {
     );
 
     if (!popup) {
-      reject(new Error("Failed to open popup. Please allow popups."));
+      console.error("Failed to open popup window");
+      reject(new Error("Failed to open popup. Please allow popups for this site."));
       return;
     }
 
     const handleMessage = (event: MessageEvent) => {
+      console.log("Received message from popup:", event.data);
+      
       if (event.data?.type === "oauth-success" && event.data?.token) {
         window.removeEventListener("message", handleMessage);
         clearInterval(checkClosed);
+        console.log("OAuth success, received token");
         resolve(event.data.token);
       } else if (event.data?.type === "oauth-error") {
         window.removeEventListener("message", handleMessage);
         clearInterval(checkClosed);
-        reject(new Error(event.data.error || "OAuth failed"));
+        console.error("OAuth error:", event.data.error);
+        reject(new Error(event.data.error || "OAuth authentication failed"));
       }
     };
 
@@ -60,6 +68,7 @@ function openOAuthPopup(provider: string): Promise<string> {
       if (popup.closed) {
         clearInterval(checkClosed);
         window.removeEventListener("message", handleMessage);
+        console.log("OAuth popup was closed by user");
         reject(new Error("Authentication cancelled"));
       }
     }, 500);
@@ -71,20 +80,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log("AuthProvider mounted, fetching user session");
     fetchUser();
   }, []);
 
   const fetchUser = async () => {
     try {
       setLoading(true);
+      console.log("Fetching user session from backend...");
       const session = await authClient.getSession();
+      console.log("Session response:", session);
+      
       if (session?.data?.user) {
+        console.log("User authenticated:", session.data.user.email);
         setUser(session.data.user as User);
       } else {
+        console.log("No active session found");
         setUser(null);
       }
     } catch (error) {
-      console.error("Failed to fetch user:", error);
+      console.error("Failed to fetch user session:", error);
       setUser(null);
     } finally {
       setLoading(false);
@@ -93,44 +108,84 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithEmail = async (email: string, password: string) => {
     try {
-      await authClient.signIn.email({ email, password });
+      console.log("Signing in with email:", email);
+      const result = await authClient.signIn.email({ email, password });
+      console.log("Sign in result:", result);
+      
       await fetchUser();
-    } catch (error) {
+      console.log("User signed in successfully");
+    } catch (error: any) {
       console.error("Email sign in failed:", error);
-      throw error;
+      
+      // Provide user-friendly error messages
+      if (error.message?.includes("Invalid")) {
+        throw new Error("Invalid email or password. Please check your credentials.");
+      } else if (error.message?.includes("not found")) {
+        throw new Error("Account not found. Please sign up first.");
+      } else {
+        throw new Error(error.message || "Sign in failed. Please try again.");
+      }
     }
   };
 
   const signUpWithEmail = async (email: string, password: string, name?: string) => {
     try {
-      await authClient.signUp.email({
+      console.log("Signing up with email:", email);
+      const result = await authClient.signUp.email({
         email,
         password,
         name,
       });
+      console.log("Sign up result:", result);
+      
       await fetchUser();
-    } catch (error) {
+      console.log("User signed up successfully");
+    } catch (error: any) {
       console.error("Email sign up failed:", error);
-      throw error;
+      
+      // Provide user-friendly error messages
+      if (error.message?.includes("already exists")) {
+        throw new Error("An account with this email already exists. Please sign in instead.");
+      } else if (error.message?.includes("password")) {
+        throw new Error("Password must be at least 8 characters long.");
+      } else {
+        throw new Error(error.message || "Sign up failed. Please try again.");
+      }
     }
   };
 
   const signInWithSocial = async (provider: "google" | "apple" | "github") => {
     try {
+      console.log(`Attempting ${provider} sign in on platform:`, Platform.OS);
+      
       if (Platform.OS === "web") {
+        console.log("Using web OAuth popup flow");
         const token = await openOAuthPopup(provider);
         storeWebBearerToken(token);
         await fetchUser();
       } else {
+        console.log("Using native OAuth flow");
         await authClient.signIn.social({
           provider,
           callbackURL: "/profile",
         });
         await fetchUser();
       }
-    } catch (error) {
+      
+      console.log(`${provider} sign in successful`);
+    } catch (error: any) {
       console.error(`${provider} sign in failed:`, error);
-      throw error;
+      
+      // Provide helpful error messages
+      if (error.message?.includes("popup")) {
+        throw new Error("Please allow popups for this site to use social sign-in.");
+      } else if (error.message?.includes("cancelled")) {
+        throw new Error("Sign in was cancelled.");
+      } else if (error.message?.includes("not configured") || error.message?.includes("Invalid")) {
+        throw new Error(`${provider} sign-in is not configured yet. Please use email/password instead.`);
+      } else {
+        throw new Error(error.message || `${provider} sign-in failed. Please try again.`);
+      }
     }
   };
 
@@ -140,8 +195,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     try {
+      console.log("Signing out user");
       await authClient.signOut();
       setUser(null);
+      console.log("User signed out successfully");
     } catch (error) {
       console.error("Sign out failed:", error);
       throw error;
