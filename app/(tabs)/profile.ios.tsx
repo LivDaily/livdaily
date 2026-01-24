@@ -102,6 +102,60 @@ export default function ProfileScreen() {
     );
   };
 
+  const handleAccessibilityPress = () => {
+    console.log('User tapped Accessibility Features');
+    Alert.alert(
+      'Accessibility Features',
+      'Customize your experience:\n\n• Adjustable font sizes\n• Screen reader compatibility\n• High contrast mode\n• Reduced motion options\n• Voice control support\n\nThese features help make LivDaily accessible to everyone.',
+      [{ text: 'Close', style: 'cancel' }]
+    );
+  };
+
+  const handleNotificationsPress = () => {
+    console.log('User tapped Presence Notifications');
+    Alert.alert(
+      'Presence Notifications',
+      'Gentle reminders throughout your day:\n\n• Morning arrival prompts\n• Midday grounding check-ins\n• Evening wind-down reminders\n• Personalized timing based on your patterns\n\nNotifications adapt to your rhythm and can be customized or turned off anytime.',
+      [{ text: 'Close', style: 'cancel' }]
+    );
+  };
+
+  const handleTrackingPress = () => {
+    console.log('User tapped Tracking Preferences');
+    Alert.alert(
+      'Tracking Preferences',
+      'Optional wellness tracking:\n\n• Movement and activity logs\n• Nutrition task completion\n• Sleep quality tracking\n• Journaling patterns\n• Grounding session history\n\nAll tracking is optional and can be turned on or off at any time. Your data is private and secure.',
+      [{ text: 'Close', style: 'cancel' }]
+    );
+  };
+
+  const handlePrivacyPress = () => {
+    console.log('User tapped Privacy Settings');
+    Alert.alert(
+      'Privacy Settings',
+      'Your data, your control:\n\n• View what data is collected\n• Manage app permissions\n• Export your data\n• Delete your account\n• Control data sharing\n\nLivDaily is designed with privacy first. Your wellness journey is yours alone.',
+      [{ text: 'Close', style: 'cancel' }]
+    );
+  };
+
+  const handleSupportPress = () => {
+    console.log('User tapped Support & Help');
+    Alert.alert(
+      'Support & Help',
+      'We are here for you:\n\n• Frequently asked questions\n• Contact support team\n• Report technical issues\n• Share feedback\n• Request features\n\nYour experience matters. Reach out anytime you need assistance.',
+      [{ text: 'Close', style: 'cancel' }]
+    );
+  };
+
+  const handleAboutPress = () => {
+    console.log('User tapped About LivDaily');
+    Alert.alert(
+      'About LivDaily',
+      'Version 1.0.0\n\nLivDaily is your 24-hour rhythm companion, designed to support your wellness journey with warmth, presence, and care.\n\nCreated with intention to help you arrive, breathe, and find your rhythm throughout each day.\n\n© 2026 LivDaily',
+      [{ text: 'Close', style: 'cancel' }]
+    );
+  };
+
   const styles = StyleSheet.create({
     container: {
       flex: 1,
@@ -374,11 +428,14 @@ export default function ProfileScreen() {
               Accessibility
             </Text>
             <Animated.View entering={FadeInDown.delay(250).duration(600)}>
-              <View 
+              <TouchableOpacity 
                 style={styles.card}
+                onPress={handleAccessibilityPress}
+                activeOpacity={0.7}
                 accessible={true}
                 accessibilityRole="button"
                 accessibilityLabel="Accessibility settings"
+                accessibilityHint="Double tap to view accessibility options"
               >
                 <View style={styles.settingRow}>
                   <View style={styles.settingLeft}>
@@ -402,7 +459,7 @@ export default function ProfileScreen() {
                     color={colors.textSecondary}
                   />
                 </View>
-              </View>
+              </TouchableOpacity>
             </Animated.View>
           </View>
 
@@ -415,11 +472,14 @@ export default function ProfileScreen() {
               Wellness Tools
             </Text>
             <Animated.View entering={FadeInDown.delay(300).duration(600)}>
-              <View 
+              <TouchableOpacity 
                 style={styles.card}
+                onPress={handleNotificationsPress}
+                activeOpacity={0.7}
                 accessible={true}
                 accessibilityRole="button"
                 accessibilityLabel="Presence notifications settings"
+                accessibilityHint="Double tap to manage notification preferences"
               >
                 <View style={styles.settingRow}>
                   <View style={styles.settingLeft}>
@@ -443,15 +503,18 @@ export default function ProfileScreen() {
                     color={colors.textSecondary}
                   />
                 </View>
-              </View>
+              </TouchableOpacity>
             </Animated.View>
 
             <Animated.View entering={FadeInDown.delay(350).duration(600)}>
-              <View 
+              <TouchableOpacity 
                 style={styles.card}
+                onPress={handleTrackingPress}
+                activeOpacity={0.7}
                 accessible={true}
                 accessibilityRole="button"
                 accessibilityLabel="Tracking preferences"
+                accessibilityHint="Double tap to manage tracking settings"
               >
                 <View style={styles.settingRow}>
                   <View style={styles.settingLeft}>
@@ -475,7 +538,7 @@ export default function ProfileScreen() {
                     color={colors.textSecondary}
                   />
                 </View>
-              </View>
+              </TouchableOpacity>
             </Animated.View>
           </View>
 
@@ -488,11 +551,14 @@ export default function ProfileScreen() {
               Privacy & Support
             </Text>
             <Animated.View entering={FadeInDown.delay(400).duration(600)}>
-              <View 
+              <TouchableOpacity 
                 style={styles.card}
+                onPress={handlePrivacyPress}
+                activeOpacity={0.7}
                 accessible={true}
                 accessibilityRole="button"
                 accessibilityLabel="Privacy settings"
+                accessibilityHint="Double tap to manage privacy and data settings"
               >
                 <View style={styles.settingRow}>
                   <View style={styles.settingLeft}>
@@ -516,15 +582,18 @@ export default function ProfileScreen() {
                     color={colors.textSecondary}
                   />
                 </View>
-              </View>
+              </TouchableOpacity>
             </Animated.View>
 
             <Animated.View entering={FadeInDown.delay(450).duration(600)}>
-              <View 
+              <TouchableOpacity 
                 style={styles.card}
+                onPress={handleSupportPress}
+                activeOpacity={0.7}
                 accessible={true}
                 accessibilityRole="button"
                 accessibilityLabel="Support and help"
+                accessibilityHint="Double tap to access support resources"
               >
                 <View style={styles.settingRow}>
                   <View style={styles.settingLeft}>
@@ -548,15 +617,18 @@ export default function ProfileScreen() {
                     color={colors.textSecondary}
                   />
                 </View>
-              </View>
+              </TouchableOpacity>
             </Animated.View>
 
             <Animated.View entering={FadeInDown.delay(500).duration(600)}>
-              <View 
+              <TouchableOpacity 
                 style={styles.card}
+                onPress={handleAboutPress}
+                activeOpacity={0.7}
                 accessible={true}
                 accessibilityRole="button"
                 accessibilityLabel="About LivDaily, version 1.0.0"
+                accessibilityHint="Double tap to view app information"
               >
                 <View style={styles.settingRow}>
                   <View style={styles.settingLeft}>
@@ -580,7 +652,7 @@ export default function ProfileScreen() {
                     color={colors.textSecondary}
                   />
                 </View>
-              </View>
+              </TouchableOpacity>
             </Animated.View>
           </View>
 
