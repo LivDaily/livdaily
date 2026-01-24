@@ -6,6 +6,31 @@ import type { FastifyRequest, FastifyReply } from 'fastify';
 export function registerUserRoutes(app: App) {
   const requireAuth = app.requireAuth();
 
+  // GET /api/user/me - Get current user info
+  app.fastify.get('/api/user/me', async (
+    request: FastifyRequest,
+    reply: FastifyReply
+  ): Promise<any | void> => {
+    const session = await requireAuth(request, reply);
+    if (!session) return;
+
+    const userId = session.user.id;
+    app.logger.info({ userId }, 'Fetching current user info');
+
+    try {
+      return {
+        id: session.user.id,
+        name: session.user.name,
+        email: session.user.email,
+        role: session.user.role || 'user',
+        image: session.user.image,
+      };
+    } catch (error) {
+      app.logger.error({ err: error, userId }, 'Failed to fetch current user');
+      throw error;
+    }
+  });
+
   // GET /api/user/profile - Get user profile
   app.fastify.get('/api/user/profile', async (
     request: FastifyRequest,

@@ -13,6 +13,7 @@ import { registerSleepRoutes } from './routes/sleep.js';
 import { registerGroundingRoutes } from './routes/grounding.js';
 import { registerMediaRoutes } from './routes/media.js';
 import { registerMotivationRoutes } from './routes/motivation.js';
+import { registerAdminRoutes } from './routes/admin.js';
 
 // Combine schemas
 const schema = { ...appSchema, ...authSchema };
@@ -40,6 +41,7 @@ registerSleepRoutes(app);
 registerGroundingRoutes(app);
 registerMediaRoutes(app);
 registerMotivationRoutes(app);
+registerAdminRoutes(app);
 
 await app.run();
 app.logger.info('LivDaily wellness app running');
