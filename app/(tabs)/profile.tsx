@@ -102,51 +102,6 @@ export default function ProfileScreen() {
     );
   };
 
-  const handleAccessibilitySettings = () => {
-    console.log('User tapped Accessibility Settings');
-    Alert.alert(
-      'Accessibility Settings',
-      'Configure accessibility features:\n\n• Adjustable font sizes\n• Screen reader compatibility\n• High contrast mode\n• Reduced motion\n• Voice control support',
-      [{ text: 'Close', style: 'cancel' }]
-    );
-  };
-
-  const handleNotifications = () => {
-    console.log('User tapped Presence Notifications');
-    Alert.alert(
-      'Presence Notifications',
-      'Manage your gentle reminders:\n\n• Morning arrival cues\n• Midday grounding prompts\n• Evening wind-down reminders\n• Custom notification times\n• Notification frequency',
-      [{ text: 'Close', style: 'cancel' }]
-    );
-  };
-
-  const handleTracking = () => {
-    console.log('User tapped Tracking Preferences');
-    Alert.alert(
-      'Tracking Preferences',
-      'Control your wellness tracking:\n\n• Movement tracking\n• Nutrition logging\n• Sleep patterns\n• Journal insights\n• Daily rhythm tracking\n\nAll tracking is optional and can be turned off anytime.',
-      [{ text: 'Close', style: 'cancel' }]
-    );
-  };
-
-  const handlePrivacy = () => {
-    console.log('User tapped Privacy Settings');
-    Alert.alert(
-      'Privacy Settings',
-      'Your data, your control:\n\n• What data we collect and why\n• How tracking works\n• Turn tracking off\n• Delete account data\n• Export your data\n• Manage permissions\n\nYour privacy and emotional safety are our priority.',
-      [{ text: 'Close', style: 'cancel' }]
-    );
-  };
-
-  const handleSupport = () => {
-    console.log('User tapped Support');
-    Alert.alert(
-      'Support & Help',
-      'We\'re here to help:\n\n• Frequently asked questions\n• Contact support team\n• Report an issue\n• Feature requests\n• Community guidelines\n• Terms of service',
-      [{ text: 'Close', style: 'cancel' }]
-    );
-  };
-
   const styles = StyleSheet.create({
     container: {
       flex: 1,
@@ -196,24 +151,31 @@ export default function ProfileScreen() {
     },
     settingRow: {
       flexDirection: 'row',
-      alignItems: 'center',
+      alignItems: 'flex-start',
       justifyContent: 'space-between',
     },
     settingLeft: {
       flexDirection: 'row',
-      alignItems: 'center',
+      alignItems: 'flex-start',
       flex: 1,
       gap: 12,
+    },
+    iconContainer: {
+      marginTop: 2,
+    },
+    settingTextContainer: {
+      flex: 1,
     },
     settingText: {
       fontSize: 16,
       fontWeight: '500',
       color: colors.text,
+      marginBottom: 4,
     },
     settingSubtext: {
       fontSize: 14,
       color: colors.textSecondary,
-      marginTop: 2,
+      lineHeight: 20,
     },
     themeGrid: {
       gap: 12,
@@ -332,13 +294,15 @@ export default function ProfileScreen() {
             >
               <View style={styles.settingRow}>
                 <View style={styles.settingLeft}>
-                  <IconSymbol
-                    ios_icon_name="paintbrush"
-                    android_material_icon_name="palette"
-                    size={24}
-                    color={colors.primary}
-                  />
-                  <View>
+                  <View style={styles.iconContainer}>
+                    <IconSymbol
+                      ios_icon_name="paintbrush"
+                      android_material_icon_name="palette"
+                      size={24}
+                      color={colors.primary}
+                    />
+                  </View>
+                  <View style={styles.settingTextContainer}>
                     <Text style={styles.settingText}>Color Theme</Text>
                     <Text style={styles.settingSubtext}>{currentThemeLabel}</Text>
                   </View>
@@ -405,24 +369,23 @@ export default function ProfileScreen() {
             Accessibility
           </Text>
           <Animated.View entering={FadeInDown.delay(250).duration(600)}>
-            <TouchableOpacity 
-              style={styles.card} 
-              activeOpacity={0.7}
-              onPress={handleAccessibilitySettings}
+            <View 
+              style={styles.card}
               accessible={true}
               accessibilityRole="button"
               accessibilityLabel="Accessibility settings"
-              accessibilityHint="Double tap to configure accessibility features"
             >
               <View style={styles.settingRow}>
                 <View style={styles.settingLeft}>
-                  <IconSymbol
-                    ios_icon_name="accessibility"
-                    android_material_icon_name="accessibility"
-                    size={24}
-                    color={colors.primary}
-                  />
-                  <View>
+                  <View style={styles.iconContainer}>
+                    <IconSymbol
+                      ios_icon_name="accessibility"
+                      android_material_icon_name="accessibility"
+                      size={24}
+                      color={colors.primary}
+                    />
+                  </View>
+                  <View style={styles.settingTextContainer}>
                     <Text style={styles.settingText}>Accessibility Features</Text>
                     <Text style={styles.settingSubtext}>Font size, screen reader, contrast</Text>
                   </View>
@@ -434,7 +397,7 @@ export default function ProfileScreen() {
                   color={colors.textSecondary}
                 />
               </View>
-            </TouchableOpacity>
+            </View>
           </Animated.View>
         </View>
 
@@ -447,24 +410,23 @@ export default function ProfileScreen() {
             Wellness Tools
           </Text>
           <Animated.View entering={FadeInDown.delay(300).duration(600)}>
-            <TouchableOpacity 
-              style={styles.card} 
-              activeOpacity={0.7}
-              onPress={handleNotifications}
+            <View 
+              style={styles.card}
               accessible={true}
               accessibilityRole="button"
               accessibilityLabel="Presence notifications settings"
-              accessibilityHint="Double tap to configure gentle reminders"
             >
               <View style={styles.settingRow}>
                 <View style={styles.settingLeft}>
-                  <IconSymbol
-                    ios_icon_name="bell"
-                    android_material_icon_name="notifications"
-                    size={24}
-                    color={colors.primary}
-                  />
-                  <View>
+                  <View style={styles.iconContainer}>
+                    <IconSymbol
+                      ios_icon_name="bell"
+                      android_material_icon_name="notifications"
+                      size={24}
+                      color={colors.primary}
+                    />
+                  </View>
+                  <View style={styles.settingTextContainer}>
                     <Text style={styles.settingText}>Presence Notifications</Text>
                     <Text style={styles.settingSubtext}>Gentle reminders throughout your day</Text>
                   </View>
@@ -476,28 +438,27 @@ export default function ProfileScreen() {
                   color={colors.textSecondary}
                 />
               </View>
-            </TouchableOpacity>
+            </View>
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(350).duration(600)}>
-            <TouchableOpacity 
-              style={styles.card} 
-              activeOpacity={0.7}
-              onPress={handleTracking}
+            <View 
+              style={styles.card}
               accessible={true}
               accessibilityRole="button"
               accessibilityLabel="Tracking preferences"
-              accessibilityHint="Double tap to configure optional tracking settings"
             >
               <View style={styles.settingRow}>
                 <View style={styles.settingLeft}>
-                  <IconSymbol
-                    ios_icon_name="chart.bar"
-                    android_material_icon_name="bar-chart"
-                    size={24}
-                    color={colors.primary}
-                  />
-                  <View>
+                  <View style={styles.iconContainer}>
+                    <IconSymbol
+                      ios_icon_name="chart.bar"
+                      android_material_icon_name="bar-chart"
+                      size={24}
+                      color={colors.primary}
+                    />
+                  </View>
+                  <View style={styles.settingTextContainer}>
                     <Text style={styles.settingText}>Tracking Preferences</Text>
                     <Text style={styles.settingSubtext}>Optional wellness tracking controls</Text>
                   </View>
@@ -509,7 +470,7 @@ export default function ProfileScreen() {
                   color={colors.textSecondary}
                 />
               </View>
-            </TouchableOpacity>
+            </View>
           </Animated.View>
         </View>
 
@@ -522,24 +483,23 @@ export default function ProfileScreen() {
             Privacy & Support
           </Text>
           <Animated.View entering={FadeInDown.delay(400).duration(600)}>
-            <TouchableOpacity 
-              style={styles.card} 
-              activeOpacity={0.7}
-              onPress={handlePrivacy}
+            <View 
+              style={styles.card}
               accessible={true}
               accessibilityRole="button"
               accessibilityLabel="Privacy settings"
-              accessibilityHint="Double tap to manage your data and privacy controls"
             >
               <View style={styles.settingRow}>
                 <View style={styles.settingLeft}>
-                  <IconSymbol
-                    ios_icon_name="lock.shield"
-                    android_material_icon_name="security"
-                    size={24}
-                    color={colors.primary}
-                  />
-                  <View>
+                  <View style={styles.iconContainer}>
+                    <IconSymbol
+                      ios_icon_name="lock.shield"
+                      android_material_icon_name="security"
+                      size={24}
+                      color={colors.primary}
+                    />
+                  </View>
+                  <View style={styles.settingTextContainer}>
                     <Text style={styles.settingText}>Privacy Settings</Text>
                     <Text style={styles.settingSubtext}>Data control, permissions, export</Text>
                   </View>
@@ -551,28 +511,27 @@ export default function ProfileScreen() {
                   color={colors.textSecondary}
                 />
               </View>
-            </TouchableOpacity>
+            </View>
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(450).duration(600)}>
-            <TouchableOpacity 
-              style={styles.card} 
-              activeOpacity={0.7}
-              onPress={handleSupport}
+            <View 
+              style={styles.card}
               accessible={true}
               accessibilityRole="button"
               accessibilityLabel="Support and help"
-              accessibilityHint="Double tap to get help and contact support"
             >
               <View style={styles.settingRow}>
                 <View style={styles.settingLeft}>
-                  <IconSymbol
-                    ios_icon_name="questionmark.circle"
-                    android_material_icon_name="help"
-                    size={24}
-                    color={colors.primary}
-                  />
-                  <View>
+                  <View style={styles.iconContainer}>
+                    <IconSymbol
+                      ios_icon_name="questionmark.circle"
+                      android_material_icon_name="help"
+                      size={24}
+                      color={colors.primary}
+                    />
+                  </View>
+                  <View style={styles.settingTextContainer}>
                     <Text style={styles.settingText}>Support & Help</Text>
                     <Text style={styles.settingSubtext}>FAQ, contact us, report issues</Text>
                   </View>
@@ -584,27 +543,27 @@ export default function ProfileScreen() {
                   color={colors.textSecondary}
                 />
               </View>
-            </TouchableOpacity>
+            </View>
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(500).duration(600)}>
-            <TouchableOpacity 
-              style={styles.card} 
-              activeOpacity={0.7}
+            <View 
+              style={styles.card}
               accessible={true}
               accessibilityRole="button"
               accessibilityLabel="About LivDaily, version 1.0.0"
-              accessibilityHint="Double tap to view app information"
             >
               <View style={styles.settingRow}>
                 <View style={styles.settingLeft}>
-                  <IconSymbol
-                    ios_icon_name="info.circle"
-                    android_material_icon_name="info"
-                    size={24}
-                    color={colors.primary}
-                  />
-                  <View>
+                  <View style={styles.iconContainer}>
+                    <IconSymbol
+                      ios_icon_name="info.circle"
+                      android_material_icon_name="info"
+                      size={24}
+                      color={colors.primary}
+                    />
+                  </View>
+                  <View style={styles.settingTextContainer}>
                     <Text style={styles.settingText}>About LivDaily</Text>
                     <Text style={styles.settingSubtext}>Version 1.0.0</Text>
                   </View>
@@ -616,7 +575,7 @@ export default function ProfileScreen() {
                   color={colors.textSecondary}
                 />
               </View>
-            </TouchableOpacity>
+            </View>
           </Animated.View>
         </View>
 
@@ -644,13 +603,15 @@ export default function ProfileScreen() {
               >
                 <View style={styles.settingRow}>
                   <View style={styles.settingLeft}>
-                    <IconSymbol
-                      ios_icon_name="shield.checkered"
-                      android_material_icon_name="admin-panel-settings"
-                      size={24}
-                      color={colors.primary}
-                    />
-                    <View>
+                    <View style={styles.iconContainer}>
+                      <IconSymbol
+                        ios_icon_name="shield.checkered"
+                        android_material_icon_name="admin-panel-settings"
+                        size={24}
+                        color={colors.primary}
+                      />
+                    </View>
+                    <View style={styles.settingTextContainer}>
                       <Text style={styles.settingText}>Admin Panel</Text>
                       <Text style={styles.settingSubtext}>Manage app content</Text>
                     </View>
@@ -684,13 +645,15 @@ export default function ProfileScreen() {
               >
                 <View style={styles.settingRow}>
                   <View style={styles.settingLeft}>
-                    <IconSymbol
-                      ios_icon_name="person.circle"
-                      android_material_icon_name="account-circle"
-                      size={24}
-                      color={colors.primary}
-                    />
-                    <View>
+                    <View style={styles.iconContainer}>
+                      <IconSymbol
+                        ios_icon_name="person.circle"
+                        android_material_icon_name="account-circle"
+                        size={24}
+                        color={colors.primary}
+                      />
+                    </View>
+                    <View style={styles.settingTextContainer}>
                       <Text style={styles.settingText}>{userName}</Text>
                       <Text style={styles.settingSubtext}>{userEmail}</Text>
                     </View>
@@ -712,13 +675,15 @@ export default function ProfileScreen() {
             >
               <View style={styles.settingRow}>
                 <View style={styles.settingLeft}>
-                  <IconSymbol
-                    ios_icon_name="arrow.right.square"
-                    android_material_icon_name="exit-to-app"
-                    size={24}
-                    color="#FFFFFF"
-                  />
-                  <View>
+                  <View style={styles.iconContainer}>
+                    <IconSymbol
+                      ios_icon_name="arrow.right.square"
+                      android_material_icon_name="exit-to-app"
+                      size={24}
+                      color="#FFFFFF"
+                    />
+                  </View>
+                  <View style={styles.settingTextContainer}>
                     <Text style={[styles.settingText, { color: '#FFFFFF' }]}>Sign Out</Text>
                   </View>
                 </View>
