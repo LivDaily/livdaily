@@ -109,6 +109,10 @@ export const aiAPI = {
 
 // User APIs
 export const userAPI = {
+  getMe: async () => {
+    return apiCall("/api/user/me");
+  },
+
   getProfile: async () => {
     return apiCall("/api/user/profile");
   },
@@ -333,6 +337,21 @@ export const motivationAPI = {
 
 // Admin APIs
 export const adminAPI = {
+  getUsers: async () => {
+    return apiCall("/api/admin/users");
+  },
+
+  updateUserRole: async (userId: string, role: 'user' | 'admin') => {
+    return apiCall(`/api/admin/users/${userId}/role`, {
+      method: "PUT",
+      body: JSON.stringify({ role }),
+    });
+  },
+
+  getStats: async () => {
+    return apiCall("/api/admin/stats");
+  },
+
   createMedia: async (data: {
     mediaType: string;
     url: string;
@@ -387,6 +406,12 @@ export const adminAPI = {
     return apiCall(`/api/admin/motivation/${id}`, {
       method: "PUT",
       body: JSON.stringify(data),
+    });
+  },
+
+  deleteMotivation: async (id: string) => {
+    return apiCall(`/api/admin/motivation/${id}`, {
+      method: "DELETE",
     });
   },
 };

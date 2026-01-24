@@ -16,6 +16,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const [showThemeSelector, setShowThemeSelector] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -28,8 +29,17 @@ export default function ProfileScreen() {
 
   const loadUserProfile = async () => {
     try {
-      const profile = await userAPI.getProfile();
+      const [profile, userData] = await Promise.all([
+        userAPI.getProfile(),
+        userAPI.getMe(),
+      ]);
       setUserProfile(profile);
+      
+      // Check if user is admin
+      if (userData?.role === 'admin') {
+        console.log('User is admin');
+        setIsAdmin(true);
+      }
       
       // Sync theme preference from backend
       if (profile?.themePreference && profile.themePreference !== themeName) {
@@ -398,6 +408,43 @@ export default function ProfileScreen() {
             </TouchableOpacity>
           </Animated.View>
         </View>
+
+        {isAdmin && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Admin</Text>
+            <Animated.View entering={FadeInDown.delay(450).duration(600)}>
+              <TouchableOpacity 
+                style={styles.card} 
+                activeOpacity={0.7}
+                onPress={() => {
+                  console.log('User tapped Admin Panel');
+                  router.push('/admin');
+                }}
+              >
+                <View style={styles.settingRow}>
+                  <View style={styles.settingLeft}>
+                    <IconSymbol
+                      ios_icon_name="shield.checkered"
+                      android_material_icon_name="admin-panel-settings"
+                      size={24}
+                      color={colors.primary}
+                    />
+                    <View>
+                      <Text style={styles.settingText}>Admin Panel</Text>
+                      <Text style={styles.settingSubtext}>Manage app content</Text>
+                    </View>
+                  </View>
+                  <IconSymbol
+                    ios_icon_name="chevron.right"
+                    android_material_icon_name="chevron-right"
+                    size={20}
+                    color={colors.textSecondary}
+                  />
+                </View>
+              </TouchableOpacity>
+            </Animated.View>
+          </View>
+        )}
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Account</Text>

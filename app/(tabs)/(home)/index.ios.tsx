@@ -47,11 +47,17 @@ export default function HomeScreen() {
   const [greeting, setGreeting] = useState<string>('');
   const [weeklyMotivation, setWeeklyMotivation] = useState<string>('');
 
+  const formatTime = (hour: number): string => {
+    const period = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+    return `${displayHour}:00 ${period}`;
+  };
+
   const rhythmPhases: RhythmPhase[] = [
     {
       id: 'morning',
       name: 'Morning Arrival',
-      time: '6:00 - 10:00',
+      time: `${formatTime(6)} - ${formatTime(10)}`,
       description: 'Begin your day with gentle presence',
       image: 'https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?w=800',
       icon: 'sunrise',
@@ -60,7 +66,7 @@ export default function HomeScreen() {
     {
       id: 'midday',
       name: 'Midday Grounding',
-      time: '10:00 - 14:00',
+      time: `${formatTime(10)} - ${formatTime(14)}`,
       description: 'Find your center in the day',
       image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800',
       icon: 'sun.max',
@@ -69,7 +75,7 @@ export default function HomeScreen() {
     {
       id: 'afternoon',
       name: 'Afternoon Movement',
-      time: '14:00 - 18:00',
+      time: `${formatTime(14)} - ${formatTime(18)}`,
       description: 'Flow with your energy',
       image: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800',
       icon: 'figure.walk',
@@ -78,7 +84,7 @@ export default function HomeScreen() {
     {
       id: 'evening',
       name: 'Evening Unwinding',
-      time: '18:00 - 22:00',
+      time: `${formatTime(18)} - ${formatTime(22)}`,
       description: 'Release the day with care',
       image: 'https://images.unsplash.com/photo-1495616811223-4d98c6e9c869?w=800',
       icon: 'sunset',
@@ -87,7 +93,7 @@ export default function HomeScreen() {
     {
       id: 'night',
       name: 'Night Rest',
-      time: '22:00 - 6:00',
+      time: `${formatTime(22)} - ${formatTime(6)}`,
       description: 'Embrace peaceful restoration',
       image: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=800',
       icon: 'moon.stars',
@@ -146,23 +152,37 @@ export default function HomeScreen() {
   const currentRhythm = rhythmPhases.find(p => p.id === currentPhase) || rhythmPhases[0];
 
   const handleGroundingTimer = () => {
-    console.log('User tapped Grounding Timer');
-    Alert.alert('Grounding Timer', 'Grounding timer feature coming soon!');
+    console.log('User tapped Grounding Timer - navigating to grounding tab');
+    router.push('/(tabs)/grounding');
   };
 
   const handleMovement = () => {
-    console.log('User tapped Movement');
-    Alert.alert('Movement', 'Movement tracking feature coming soon!');
+    console.log('User tapped Movement - navigating to movement screen');
+    router.push('/movement');
   };
 
   const handleNutrition = () => {
-    console.log('User tapped Nutrition');
-    Alert.alert('Nutrition', 'Nutrition tasks feature coming soon!');
+    console.log('User tapped Nutrition - navigating to nutrition tab');
+    router.push('/(tabs)/nutrition');
   };
 
   const handleSleep = () => {
-    console.log('User tapped Sleep');
-    Alert.alert('Sleep', 'Sleep tracking feature coming soon!');
+    console.log('User tapped Sleep - navigating to sleep screen');
+    router.push('/sleep');
+  };
+
+  const handleRhythmPhase = (phaseId: string) => {
+    console.log('User tapped rhythm phase:', phaseId);
+    // Navigate based on phase
+    if (phaseId === 'morning' || phaseId === 'midday') {
+      router.push('/(tabs)/grounding');
+    } else if (phaseId === 'afternoon') {
+      router.push('/movement');
+    } else if (phaseId === 'evening') {
+      router.push('/(tabs)/journal');
+    } else if (phaseId === 'night') {
+      router.push('/sleep');
+    }
   };
 
   const styles = StyleSheet.create({
@@ -459,6 +479,7 @@ export default function HomeScreen() {
                 <TouchableOpacity
                   style={styles.rhythmPhaseCard}
                   activeOpacity={0.7}
+                  onPress={() => handleRhythmPhase(phase.id)}
                 >
                   <Image
                     source={resolveImageSource(phase.image)}
