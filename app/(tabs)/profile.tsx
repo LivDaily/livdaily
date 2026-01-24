@@ -17,36 +17,41 @@ export default function ProfileScreen() {
   const [showThemeSelector, setShowThemeSelector] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(true);
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      // Redirect to auth screen if not logged in
-      router.replace('/auth');
-    } else if (user) {
+    if (user) {
       loadUserProfile();
+    } else {
+      setProfileLoading(false);
     }
   }, [user, authLoading]);
 
   const loadUserProfile = async () => {
+    console.log('Loading user profile data from backend');
+    setProfileLoading(true);
     try {
       const [profile, userData] = await Promise.all([
         userAPI.getProfile(),
         userAPI.getMe(),
       ]);
+      
+      console.log('User profile loaded:', { profile, userData });
       setUserProfile(profile);
       
-      // Check if user is admin
       if (userData?.role === 'admin') {
-        console.log('User is admin');
+        console.log('User has admin role');
         setIsAdmin(true);
       }
       
-      // Sync theme preference from backend
       if (profile?.themePreference && profile.themePreference !== themeName) {
         setTheme(profile.themePreference as ThemeName);
       }
     } catch (error) {
       console.error('Failed to load user profile:', error);
+      Alert.alert('Error', 'Failed to load profile data. Please try again.');
+    } finally {
+      setProfileLoading(false);
     }
   };
 
@@ -64,11 +69,12 @@ export default function ProfileScreen() {
     setTheme(theme);
     setShowThemeSelector(false);
     
-    // Save theme preference to backend
     try {
       await userAPI.updateProfile({ themePreference: theme });
+      console.log('Theme preference saved to backend');
     } catch (error) {
       console.error('Failed to save theme preference:', error);
+      Alert.alert('Warning', 'Theme changed locally but could not be saved to server.');
     }
   };
 
@@ -82,9 +88,10 @@ export default function ProfileScreen() {
           text: 'Sign Out',
           style: 'destructive',
           onPress: async () => {
+            console.log('User confirmed sign out');
             try {
               await signOut();
-              router.replace('/auth');
+              console.log('Sign out successful');
             } catch (error) {
               console.error('Failed to sign out:', error);
               Alert.alert('Error', 'Failed to sign out. Please try again.');
@@ -94,16 +101,6 @@ export default function ProfileScreen() {
       ]
     );
   };
-
-  if (authLoading) {
-    return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <Text style={{ color: colors.text }}>Loading...</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
 
   const styles = StyleSheet.create({
     container: {
@@ -213,9 +210,37 @@ export default function ProfileScreen() {
       height: 24,
       borderRadius: 12,
     },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    loadingText: {
+      fontSize: 16,
+      color: colors.textSecondary,
+      marginTop: 12,
+    },
   });
 
   const currentThemeLabel = themeOptions.find(t => t.name === themeName)?.label || 'Earth Tones';
+  const userName = userProfile?.name || user?.name || user?.email || 'User';
+  const userEmail = user?.email || 'No email';
+
+  if (authLoading || profileLoading) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <View style={styles.loadingContainer}>
+          <IconSymbol
+            ios_icon_name="person.circle"
+            android_material_icon_name="account-circle"
+            size={48}
+            color={colors.primary}
+          />
+          <Text style={styles.loadingText}>Loading profile...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -223,16 +248,30 @@ export default function ProfileScreen() {
         style={styles.container}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        accessible={true}
+        accessibilityLabel="Profile settings screen"
       >
         <Animated.View entering={FadeIn.duration(600)} style={styles.header}>
-          <Text style={styles.headerTitle}>Settings</Text>
+          <Text 
+            style={styles.headerTitle}
+            accessible={true}
+            accessibilityRole="header"
+          >
+            Settings
+          </Text>
           <Text style={styles.headerSubtitle}>
             Personalize your sanctuary
           </Text>
         </Animated.View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Appearance</Text>
+          <Text 
+            style={styles.sectionTitle}
+            accessible={true}
+            accessibilityRole="header"
+          >
+            Appearance
+          </Text>
           <Animated.View entering={FadeInDown.delay(200).duration(600)}>
             <TouchableOpacity
               style={styles.card}
@@ -241,6 +280,10 @@ export default function ProfileScreen() {
                 setShowThemeSelector(!showThemeSelector);
               }}
               activeOpacity={0.7}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel={`Color theme, currently ${currentThemeLabel}`}
+              accessibilityHint="Double tap to change color theme"
             >
               <View style={styles.settingRow}>
                 <View style={styles.settingLeft}>
@@ -276,6 +319,11 @@ export default function ProfileScreen() {
                       style={[styles.themeOption, isSelected && styles.themeOptionSelected]}
                       onPress={() => handleThemeChange(theme.name)}
                       activeOpacity={0.7}
+                      accessible={true}
+                      accessibilityRole="radio"
+                      accessibilityLabel={`${theme.label} theme, ${theme.description}`}
+                      accessibilityState={{ selected: isSelected }}
+                      accessibilityHint="Double tap to select this theme"
                     >
                       <View style={styles.themeOptionHeader}>
                         <Text style={styles.themeOptionName}>{theme.label}</Text>
@@ -304,9 +352,22 @@ export default function ProfileScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Wellness Tools</Text>
+          <Text 
+            style={styles.sectionTitle}
+            accessible={true}
+            accessibilityRole="header"
+          >
+            Wellness Tools
+          </Text>
           <Animated.View entering={FadeInDown.delay(300).duration(600)}>
-            <TouchableOpacity style={styles.card} activeOpacity={0.7}>
+            <TouchableOpacity 
+              style={styles.card} 
+              activeOpacity={0.7}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel="Presence notifications settings"
+              accessibilityHint="Double tap to configure gentle reminders"
+            >
               <View style={styles.settingRow}>
                 <View style={styles.settingLeft}>
                   <IconSymbol
@@ -331,7 +392,14 @@ export default function ProfileScreen() {
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(350).duration(600)}>
-            <TouchableOpacity style={styles.card} activeOpacity={0.7}>
+            <TouchableOpacity 
+              style={styles.card} 
+              activeOpacity={0.7}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel="Tracking preferences"
+              accessibilityHint="Double tap to configure optional tracking settings"
+            >
               <View style={styles.settingRow}>
                 <View style={styles.settingLeft}>
                   <IconSymbol
@@ -357,9 +425,22 @@ export default function ProfileScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Privacy & Support</Text>
+          <Text 
+            style={styles.sectionTitle}
+            accessible={true}
+            accessibilityRole="header"
+          >
+            Privacy & Support
+          </Text>
           <Animated.View entering={FadeInDown.delay(400).duration(600)}>
-            <TouchableOpacity style={styles.card} activeOpacity={0.7}>
+            <TouchableOpacity 
+              style={styles.card} 
+              activeOpacity={0.7}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel="Privacy settings"
+              accessibilityHint="Double tap to manage your data and privacy controls"
+            >
               <View style={styles.settingRow}>
                 <View style={styles.settingLeft}>
                   <IconSymbol
@@ -384,7 +465,14 @@ export default function ProfileScreen() {
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(450).duration(600)}>
-            <TouchableOpacity style={styles.card} activeOpacity={0.7}>
+            <TouchableOpacity 
+              style={styles.card} 
+              activeOpacity={0.7}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel="About LivDaily, version 1.0.0"
+              accessibilityHint="Double tap to view app information"
+            >
               <View style={styles.settingRow}>
                 <View style={styles.settingLeft}>
                   <IconSymbol
@@ -411,7 +499,13 @@ export default function ProfileScreen() {
 
         {isAdmin && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Admin</Text>
+            <Text 
+              style={styles.sectionTitle}
+              accessible={true}
+              accessibilityRole="header"
+            >
+              Admin
+            </Text>
             <Animated.View entering={FadeInDown.delay(450).duration(600)}>
               <TouchableOpacity 
                 style={styles.card} 
@@ -420,6 +514,10 @@ export default function ProfileScreen() {
                   console.log('User tapped Admin Panel');
                   router.push('/admin');
                 }}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel="Admin panel"
+                accessibilityHint="Double tap to manage app content"
               >
                 <View style={styles.settingRow}>
                   <View style={styles.settingLeft}>
@@ -447,10 +545,20 @@ export default function ProfileScreen() {
         )}
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Account</Text>
+          <Text 
+            style={styles.sectionTitle}
+            accessible={true}
+            accessibilityRole="header"
+          >
+            Account
+          </Text>
           {user && (
             <Animated.View entering={FadeInDown.delay(500).duration(600)}>
-              <View style={styles.card}>
+              <View 
+                style={styles.card}
+                accessible={true}
+                accessibilityLabel={`Account information, ${userName}, ${userEmail}`}
+              >
                 <View style={styles.settingRow}>
                   <View style={styles.settingLeft}>
                     <IconSymbol
@@ -460,8 +568,8 @@ export default function ProfileScreen() {
                       color={colors.primary}
                     />
                     <View>
-                      <Text style={styles.settingText}>{user.name || user.email}</Text>
-                      <Text style={styles.settingSubtext}>{user.email}</Text>
+                      <Text style={styles.settingText}>{userName}</Text>
+                      <Text style={styles.settingSubtext}>{userEmail}</Text>
                     </View>
                   </View>
                 </View>
@@ -474,6 +582,10 @@ export default function ProfileScreen() {
               style={[styles.card, { backgroundColor: '#FF3B30' }]} 
               activeOpacity={0.7}
               onPress={handleSignOut}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel="Sign out"
+              accessibilityHint="Double tap to sign out of your account"
             >
               <View style={styles.settingRow}>
                 <View style={styles.settingLeft}>

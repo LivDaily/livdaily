@@ -14,7 +14,6 @@ export async function apiCall<T = any>(
   options: RequestInit = {}
 ): Promise<T> {
   try {
-    // Get the session to include auth headers
     const session = await authClient.getSession();
     
     const headers: HeadersInit = {
@@ -22,7 +21,6 @@ export async function apiCall<T = any>(
       ...options.headers,
     };
 
-    // Add auth token if available
     if (session?.data?.session?.token) {
       headers["Authorization"] = `Bearer ${session.data.session.token}`;
     }
@@ -287,6 +285,36 @@ export const groundingAPI = {
       method: "POST",
       body: JSON.stringify(data),
     });
+  },
+};
+
+// Mindfulness APIs
+export const mindfulnessAPI = {
+  getContent: async () => {
+    return apiCall("/api/mindfulness/content");
+  },
+
+  getContentById: async (id: string) => {
+    return apiCall(`/api/mindfulness/content/${id}`);
+  },
+
+  createJournalEntry: async (data: {
+    mindfulnessContentId?: string;
+    content: string;
+    mood?: string;
+  }) => {
+    return apiCall("/api/mindfulness/journal", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+
+  getJournalEntries: async () => {
+    return apiCall("/api/mindfulness/journal");
+  },
+
+  getSubscription: async () => {
+    return apiCall("/api/mindfulness/subscription");
   },
 };
 

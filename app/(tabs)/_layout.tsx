@@ -25,10 +25,10 @@ export default function TabLayout() {
               android_material_icon_name: 'book',
             },
             {
-              name: 'Grounding',
-              route: '/(tabs)/grounding',
-              ios_icon_name: 'timer',
-              android_material_icon_name: 'timer',
+              name: 'Mindful',
+              route: '/(tabs)/mindfulness',
+              ios_icon_name: 'sparkles',
+              android_material_icon_name: 'auto-awesome',
             },
             {
               name: 'Nutrition',
@@ -51,7 +51,7 @@ export default function TabLayout() {
     >
       <Tabs.Screen name="(home)" options={{ headerShown: false }} />
       <Tabs.Screen name="journal" options={{ headerShown: false }} />
-      <Tabs.Screen name="grounding" options={{ headerShown: false }} />
+      <Tabs.Screen name="mindfulness" options={{ headerShown: false }} />
       <Tabs.Screen name="nutrition" options={{ headerShown: false }} />
       <Tabs.Screen name="profile" options={{ headerShown: false }} />
     </Tabs>

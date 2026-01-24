@@ -12,8 +12,7 @@ import {
 import * as SplashScreen from "expo-splash-screen";
 import "react-native-reanimated";
 import React, { useEffect } from "react";
-import { useColorScheme, Alert } from "react-native";
-import { useNetworkState } from "expo-network";
+import { useColorScheme, AccessibilityInfo } from "react-native";
 import { WidgetProvider } from "@/contexts/WidgetContext";
 import { ThemeProvider as AppThemeProvider } from "@/contexts/ThemeContext";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -33,6 +32,11 @@ export default function RootLayout() {
     }
   }, [loaded]);
 
+  useEffect(() => {
+    // Announce app launch for screen readers
+    AccessibilityInfo.announceForAccessibility('LivDaily wellness app loaded');
+  }, []);
+
   if (!loaded) {
     return null;
   }
@@ -46,9 +50,32 @@ export default function RootLayout() {
               <SystemBars style="auto" />
               <Stack screenOptions={{ headerShown: false }}>
                 <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                <Stack.Screen name="auth" options={{ headerShown: false }} />
                 <Stack.Screen name="auth-popup" options={{ headerShown: false }} />
                 <Stack.Screen name="auth-callback" options={{ headerShown: false }} />
+                <Stack.Screen 
+                  name="admin" 
+                  options={{ 
+                    headerShown: true,
+                    title: 'Admin Panel',
+                    presentation: 'modal',
+                  }} 
+                />
+                <Stack.Screen 
+                  name="movement" 
+                  options={{ 
+                    headerShown: true,
+                    title: 'Movement',
+                    presentation: 'modal',
+                  }} 
+                />
+                <Stack.Screen 
+                  name="sleep" 
+                  options={{ 
+                    headerShown: true,
+                    title: 'Sleep',
+                    presentation: 'modal',
+                  }} 
+                />
               </Stack>
               <StatusBar style="auto" />
             </WidgetProvider>

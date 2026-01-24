@@ -16,9 +16,9 @@ export default function TabLayout() {
         <Label>Journal</Label>
         <Icon sf={{ default: 'book', selected: 'book.fill' }} drawable="book" />
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="grounding">
-        <Label>Grounding</Label>
-        <Icon sf={{ default: 'timer', selected: 'timer' }} drawable="timer" />
+      <NativeTabs.Trigger name="mindfulness">
+        <Label>Mindful</Label>
+        <Icon sf={{ default: 'sparkles', selected: 'sparkles' }} drawable="auto-awesome" />
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="nutrition">
         <Label>Nutrition</Label>
