@@ -50,8 +50,6 @@ export default function RootLayout() {
               <SystemBars style="auto" />
               <Stack screenOptions={{ headerShown: false }}>
                 <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                <Stack.Screen name="auth-popup" options={{ headerShown: false }} />
-                <Stack.Screen name="auth-callback" options={{ headerShown: false }} />
                 <Stack.Screen 
                   name="admin" 
                   options={{ 
@@ -73,6 +71,14 @@ export default function RootLayout() {
                   options={{ 
                     headerShown: true,
                     title: 'Sleep',
+                    presentation: 'modal',
+                  }} 
+                />
+                <Stack.Screen 
+                  name="grounding-timer" 
+                  options={{ 
+                    headerShown: true,
+                    title: 'Grounding Timer',
                     presentation: 'modal',
                   }} 
                 />
