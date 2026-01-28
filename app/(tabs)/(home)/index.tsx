@@ -10,7 +10,6 @@ import {
   ImageSourcePropType,
   Dimensions,
   Platform,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -19,7 +18,7 @@ import { useAppTheme } from '@/contexts/ThemeContext';
 import { commonStyles } from '@/styles/commonStyles';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { useAuth } from '@/contexts/AuthContext';
-import { mediaAPI, motivationAPI } from '@/utils/api';
+import { motivationAPI } from '@/utils/api';
 import { useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
@@ -105,9 +104,12 @@ export default function HomeScreen() {
   useEffect(() => {
     console.log('HomeScreen mounted - determining current rhythm phase');
     determineCurrentPhase();
-    
+  }, []);
+
+  useEffect(() => {
     // Only load motivation if user is authenticated
-    if (user) {
+    if (user && !authLoading) {
+      console.log('User authenticated, loading weekly motivation');
       loadWeeklyMotivation();
     }
   }, [user, authLoading]);

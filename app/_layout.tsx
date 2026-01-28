@@ -51,14 +51,6 @@ export default function RootLayout() {
               <Stack screenOptions={{ headerShown: false }}>
                 <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                 <Stack.Screen 
-                  name="admin" 
-                  options={{ 
-                    headerShown: true,
-                    title: 'Admin Panel',
-                    presentation: 'modal',
-                  }} 
-                />
-                <Stack.Screen 
                   name="movement" 
                   options={{ 
                     headerShown: true,

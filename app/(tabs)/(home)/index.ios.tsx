@@ -9,7 +9,6 @@ import {
   Image,
   ImageSourcePropType,
   Dimensions,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -104,9 +103,12 @@ export default function HomeScreen() {
   useEffect(() => {
     console.log('HomeScreen mounted - determining current rhythm phase');
     determineCurrentPhase();
-    
+  }, []);
+
+  useEffect(() => {
     // Only load motivation if user is authenticated
-    if (user) {
+    if (user && !authLoading) {
+      console.log('User authenticated, loading weekly motivation');
       loadWeeklyMotivation();
     }
   }, [user, authLoading]);
@@ -357,6 +359,7 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
+      <Stack.Screen options={{ headerShown: false }} />
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.scrollContent}

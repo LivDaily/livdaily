@@ -19,6 +19,7 @@ import { useAppTheme } from '@/contexts/ThemeContext';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { journalAPI, aiAPI } from '@/utils/api';
 import { useRouter } from 'expo-router';
+import { useAuth } from '@/contexts/AuthContext';
 
 function resolveImageSource(source: string | number | ImageSourcePropType | undefined): ImageSourcePropType {
   if (!source) return { uri: '' };
@@ -38,6 +39,7 @@ interface JournalEntry {
 export default function JournalScreen() {
   const { colors } = useAppTheme();
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
   const [isWriting, setIsWriting] = useState(false);
   const [journalContent, setJournalContent] = useState('');
   const [selectedMood, setSelectedMood] = useState('');
@@ -61,9 +63,16 @@ export default function JournalScreen() {
 
   useEffect(() => {
     console.log('JournalScreen mounted');
-    loadEntries();
     generateAIPrompt();
   }, []);
+
+  useEffect(() => {
+    // Only load entries if user is authenticated
+    if (user && !authLoading) {
+      console.log('User authenticated, loading journal entries');
+      loadEntries();
+    }
+  }, [user, authLoading]);
 
   const loadEntries = async () => {
     console.log('Loading journal entries');
@@ -78,6 +87,21 @@ export default function JournalScreen() {
 
   const generateAIPrompt = async () => {
     console.log('Generating AI journal prompt');
+    
+    // Use fallback prompts if not authenticated
+    if (!user) {
+      const prompts = [
+        'What are you noticing in your body right now?',
+        'What would feel supportive today?',
+        'What are you grateful for in this moment?',
+        'What do you need to release?',
+        'How are you arriving to yourself today?',
+      ];
+      const randomPrompt = prompts[Math.floor(Math.random() * prompts.length)];
+      setAiPrompt(randomPrompt);
+      return;
+    }
+
     try {
       const hour = new Date().getHours();
       let rhythmPhase = 'morning';
@@ -129,6 +153,11 @@ export default function JournalScreen() {
     
     if (!journalContent.trim()) {
       Alert.alert('Error', 'Please write something before saving');
+      return;
+    }
+
+    if (!user) {
+      Alert.alert('Sign In Required', 'Please sign in to save journal entries');
       return;
     }
 
@@ -566,7 +595,7 @@ export default function JournalScreen() {
                   color={colors.textSecondary}
                 />
                 <Text style={styles.emptyStateText}>
-                  Your journal entries will appear here
+                  {user ? 'Your journal entries will appear here' : 'Sign in to save and view journal entries'}
                 </Text>
               </View>
             ) : (
