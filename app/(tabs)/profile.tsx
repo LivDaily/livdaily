@@ -40,7 +40,8 @@ export default function ProfileScreen() {
       }
     } catch (error) {
       console.error('Failed to load user profile:', error);
-      Alert.alert('Error', 'Failed to load profile data. Please try again.');
+      // Don't show error alert - profile data is optional
+      setUserProfile(null);
     } finally {
       setProfileLoading(false);
     }
@@ -60,12 +61,15 @@ export default function ProfileScreen() {
     setTheme(theme);
     setShowThemeSelector(false);
     
-    try {
-      await userAPI.updateProfile({ themePreference: theme });
-      console.log('Theme preference saved to backend');
-    } catch (error) {
-      console.error('Failed to save theme preference:', error);
-      Alert.alert('Warning', 'Theme changed locally but could not be saved to server.');
+    // Only try to save to backend if user is authenticated
+    if (user) {
+      try {
+        await userAPI.updateProfile({ themePreference: theme });
+        console.log('Theme preference saved to backend');
+      } catch (error) {
+        console.error('Failed to save theme preference:', error);
+        // Don't show error - theme still works locally
+      }
     }
   };
 
@@ -275,8 +279,8 @@ export default function ProfileScreen() {
   });
 
   const currentThemeLabel = themeOptions.find(t => t.name === themeName)?.label || 'Earth Tones';
-  const userName = userProfile?.name || user?.name || user?.email || 'User';
-  const userEmail = user?.email || 'No email';
+  const userName = userProfile?.name || user?.name || user?.email || 'Guest';
+  const userEmail = user?.email || 'Not signed in';
 
   if (authLoading || profileLoading) {
     return (
@@ -642,15 +646,15 @@ export default function ProfileScreen() {
           </Animated.View>
         </View>
 
-        <View style={styles.section}>
-          <Text 
-            style={styles.sectionTitle}
-            accessible={true}
-            accessibilityRole="header"
-          >
-            Account
-          </Text>
-          {user && (
+        {user && (
+          <View style={styles.section}>
+            <Text 
+              style={styles.sectionTitle}
+              accessible={true}
+              accessibilityRole="header"
+            >
+              Account
+            </Text>
             <Animated.View entering={FadeInDown.delay(600).duration(600)}>
               <View 
                 style={styles.card}
@@ -675,36 +679,36 @@ export default function ProfileScreen() {
                 </View>
               </View>
             </Animated.View>
-          )}
 
-          <Animated.View entering={FadeInDown.delay(650).duration(600)}>
-            <TouchableOpacity 
-              style={[styles.card, { backgroundColor: '#FF3B30' }]} 
-              activeOpacity={0.7}
-              onPress={handleSignOut}
-              accessible={true}
-              accessibilityRole="button"
-              accessibilityLabel="Sign out"
-              accessibilityHint="Double tap to sign out of your account"
-            >
-              <View style={styles.settingRow}>
-                <View style={styles.settingLeft}>
-                  <View style={styles.iconContainer}>
-                    <IconSymbol
-                      ios_icon_name="arrow.right.square"
-                      android_material_icon_name="exit-to-app"
-                      size={24}
-                      color="#FFFFFF"
-                    />
-                  </View>
-                  <View style={styles.settingTextContainer}>
-                    <Text style={[styles.settingText, { color: '#FFFFFF' }]}>Sign Out</Text>
+            <Animated.View entering={FadeInDown.delay(650).duration(600)}>
+              <TouchableOpacity 
+                style={[styles.card, { backgroundColor: '#FF3B30' }]} 
+                activeOpacity={0.7}
+                onPress={handleSignOut}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel="Sign out"
+                accessibilityHint="Double tap to sign out of your account"
+              >
+                <View style={styles.settingRow}>
+                  <View style={styles.settingLeft}>
+                    <View style={styles.iconContainer}>
+                      <IconSymbol
+                        ios_icon_name="arrow.right.square"
+                        android_material_icon_name="exit-to-app"
+                        size={24}
+                        color="#FFFFFF"
+                      />
+                    </View>
+                    <View style={styles.settingTextContainer}>
+                      <Text style={[styles.settingText, { color: '#FFFFFF' }]}>Sign Out</Text>
+                    </View>
                   </View>
                 </View>
-              </View>
-            </TouchableOpacity>
-          </Animated.View>
-        </View>
+              </TouchableOpacity>
+            </Animated.View>
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );

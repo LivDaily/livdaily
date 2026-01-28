@@ -17,9 +17,9 @@ import { IconSymbol } from '@/components/IconSymbol';
 import { useAppTheme } from '@/contexts/ThemeContext';
 import { commonStyles } from '@/styles/commonStyles';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
-import { Stack, useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { motivationAPI } from '@/utils/api';
+import { Stack, useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 
@@ -104,10 +104,10 @@ export default function HomeScreen() {
   useEffect(() => {
     console.log('HomeScreen mounted - determining current rhythm phase');
     determineCurrentPhase();
-    loadWeeklyMotivation();
     
-    if (!authLoading && !user) {
-      router.replace('/auth');
+    // Only load motivation if user is authenticated
+    if (user) {
+      loadWeeklyMotivation();
     }
   }, [user, authLoading]);
 
@@ -119,6 +119,7 @@ export default function HomeScreen() {
       }
     } catch (error) {
       console.error('Failed to load weekly motivation:', error);
+      // Don't show error to user - motivation is optional
     }
   };
 
@@ -191,7 +192,7 @@ export default function HomeScreen() {
       backgroundColor: colors.background,
     },
     scrollContent: {
-      paddingBottom: 40,
+      paddingBottom: 120,
     },
     header: {
       paddingHorizontal: 24,
@@ -355,147 +356,144 @@ export default function HomeScreen() {
   });
 
   return (
-    <>
-      <Stack.Screen options={{ headerShown: false }} />
-      <SafeAreaView style={styles.container} edges={['top']}>
-        <ScrollView
-          style={styles.container}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          <Animated.View entering={FadeIn.duration(600)} style={styles.header}>
-            <Text style={styles.greetingText}>{greeting}</Text>
-            <Text style={styles.dateText}>{todayDate}</Text>
-          </Animated.View>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <Animated.View entering={FadeIn.duration(600)} style={styles.header}>
+          <Text style={styles.greetingText}>{greeting}</Text>
+          <Text style={styles.dateText}>{todayDate}</Text>
+        </Animated.View>
 
-          <Animated.View entering={FadeInDown.delay(200).duration(600)} style={styles.heroCard}>
-            <Image
-              source={resolveImageSource(currentRhythm.image)}
-              style={styles.heroImage}
-              resizeMode="cover"
-            />
-            <LinearGradient
-              colors={['transparent', 'rgba(0,0,0,0.7)']}
-              style={styles.heroOverlay}
-            >
-              <View style={styles.heroPhaseIcon}>
-                <IconSymbol
-                  ios_icon_name={currentRhythm.icon}
-                  android_material_icon_name={currentRhythm.androidIcon}
-                  size={32}
-                  color="#FFFFFF"
+        <Animated.View entering={FadeInDown.delay(200).duration(600)} style={styles.heroCard}>
+          <Image
+            source={resolveImageSource(currentRhythm.image)}
+            style={styles.heroImage}
+            resizeMode="cover"
+          />
+          <LinearGradient
+            colors={['transparent', 'rgba(0,0,0,0.7)']}
+            style={styles.heroOverlay}
+          >
+            <View style={styles.heroPhaseIcon}>
+              <IconSymbol
+                ios_icon_name={currentRhythm.icon}
+                android_material_icon_name={currentRhythm.androidIcon}
+                size={32}
+                color="#FFFFFF"
+              />
+            </View>
+            <Text style={styles.heroPhaseName}>{currentRhythm.name}</Text>
+            <Text style={styles.heroPhaseTime}>{currentRhythm.time}</Text>
+            <Text style={styles.heroPhaseDescription}>{currentRhythm.description}</Text>
+          </LinearGradient>
+        </Animated.View>
+
+        <Text style={styles.sectionTitle}>Quick Actions</Text>
+        <Animated.View entering={FadeInDown.delay(400).duration(600)} style={styles.quickActionsGrid}>
+          <TouchableOpacity
+            style={[styles.quickActionCard, { backgroundColor: colors.card }]}
+            onPress={handleGroundingTimer}
+            activeOpacity={0.7}
+          >
+            <View style={styles.quickActionIcon}>
+              <IconSymbol
+                ios_icon_name="timer"
+                android_material_icon_name="timer"
+                size={32}
+                color={colors.primary}
+              />
+            </View>
+            <Text style={styles.quickActionTitle}>Grounding</Text>
+            <Text style={styles.quickActionSubtitle}>Breathwork & Focus</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.quickActionCard, { backgroundColor: colors.card }]}
+            onPress={handleMovement}
+            activeOpacity={0.7}
+          >
+            <View style={styles.quickActionIcon}>
+              <IconSymbol
+                ios_icon_name="figure.walk"
+                android_material_icon_name="directions-walk"
+                size={32}
+                color={colors.primary}
+              />
+            </View>
+            <Text style={styles.quickActionTitle}>Movement</Text>
+            <Text style={styles.quickActionSubtitle}>Guided Workouts</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.quickActionCard, { backgroundColor: colors.card }]}
+            onPress={handleNutrition}
+            activeOpacity={0.7}
+          >
+            <View style={styles.quickActionIcon}>
+              <IconSymbol
+                ios_icon_name="leaf"
+                android_material_icon_name="eco"
+                size={32}
+                color={colors.primary}
+              />
+            </View>
+            <Text style={styles.quickActionTitle}>Nutrition</Text>
+            <Text style={styles.quickActionSubtitle}>Daily Tasks</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.quickActionCard, { backgroundColor: colors.card }]}
+            onPress={handleSleep}
+            activeOpacity={0.7}
+          >
+            <View style={styles.quickActionIcon}>
+              <IconSymbol
+                ios_icon_name="moon.stars"
+                android_material_icon_name="nights-stay"
+                size={32}
+                color={colors.primary}
+              />
+            </View>
+            <Text style={styles.quickActionTitle}>Sleep</Text>
+            <Text style={styles.quickActionSubtitle}>Wind Down</Text>
+          </TouchableOpacity>
+        </Animated.View>
+
+        {weeklyMotivation && (
+          <>
+            <Text style={styles.sectionTitle}>This Week&apos;s Inspiration</Text>
+            <Animated.View entering={FadeInDown.delay(600).duration(600)} style={styles.motivationCard}>
+              <Text style={styles.motivationText}>{weeklyMotivation}</Text>
+            </Animated.View>
+          </>
+        )}
+
+        <Text style={styles.sectionTitle}>Your Daily Rhythm</Text>
+        <Animated.View entering={FadeInDown.delay(600).duration(600)} style={styles.rhythmPhasesContainer}>
+          {rhythmPhases.map((phase, index) => (
+            <React.Fragment key={phase.id}>
+              <TouchableOpacity
+                style={styles.rhythmPhaseCard}
+                activeOpacity={0.7}
+                onPress={() => handleRhythmPhase(phase.id)}
+              >
+                <Image
+                  source={resolveImageSource(phase.image)}
+                  style={styles.rhythmPhaseImage}
+                  resizeMode="cover"
                 />
-              </View>
-              <Text style={styles.heroPhaseName}>{currentRhythm.name}</Text>
-              <Text style={styles.heroPhaseTime}>{currentRhythm.time}</Text>
-              <Text style={styles.heroPhaseDescription}>{currentRhythm.description}</Text>
-            </LinearGradient>
-          </Animated.View>
-
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
-          <Animated.View entering={FadeInDown.delay(400).duration(600)} style={styles.quickActionsGrid}>
-            <TouchableOpacity
-              style={[styles.quickActionCard, { backgroundColor: colors.card }]}
-              onPress={handleGroundingTimer}
-              activeOpacity={0.7}
-            >
-              <View style={styles.quickActionIcon}>
-                <IconSymbol
-                  ios_icon_name="timer"
-                  android_material_icon_name="timer"
-                  size={32}
-                  color={colors.primary}
-                />
-              </View>
-              <Text style={styles.quickActionTitle}>Grounding</Text>
-              <Text style={styles.quickActionSubtitle}>Breathwork & Focus</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.quickActionCard, { backgroundColor: colors.card }]}
-              onPress={handleMovement}
-              activeOpacity={0.7}
-            >
-              <View style={styles.quickActionIcon}>
-                <IconSymbol
-                  ios_icon_name="figure.walk"
-                  android_material_icon_name="directions-walk"
-                  size={32}
-                  color={colors.primary}
-                />
-              </View>
-              <Text style={styles.quickActionTitle}>Movement</Text>
-              <Text style={styles.quickActionSubtitle}>Guided Workouts</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.quickActionCard, { backgroundColor: colors.card }]}
-              onPress={handleNutrition}
-              activeOpacity={0.7}
-            >
-              <View style={styles.quickActionIcon}>
-                <IconSymbol
-                  ios_icon_name="leaf"
-                  android_material_icon_name="eco"
-                  size={32}
-                  color={colors.primary}
-                />
-              </View>
-              <Text style={styles.quickActionTitle}>Nutrition</Text>
-              <Text style={styles.quickActionSubtitle}>Daily Tasks</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.quickActionCard, { backgroundColor: colors.card }]}
-              onPress={handleSleep}
-              activeOpacity={0.7}
-            >
-              <View style={styles.quickActionIcon}>
-                <IconSymbol
-                  ios_icon_name="moon.stars"
-                  android_material_icon_name="nights-stay"
-                  size={32}
-                  color={colors.primary}
-                />
-              </View>
-              <Text style={styles.quickActionTitle}>Sleep</Text>
-              <Text style={styles.quickActionSubtitle}>Wind Down</Text>
-            </TouchableOpacity>
-          </Animated.View>
-
-          {weeklyMotivation && (
-            <>
-              <Text style={styles.sectionTitle}>This Week&apos;s Inspiration</Text>
-              <Animated.View entering={FadeInDown.delay(600).duration(600)} style={styles.motivationCard}>
-                <Text style={styles.motivationText}>{weeklyMotivation}</Text>
-              </Animated.View>
-            </>
-          )}
-
-          <Text style={styles.sectionTitle}>Your Daily Rhythm</Text>
-          <Animated.View entering={FadeInDown.delay(600).duration(600)} style={styles.rhythmPhasesContainer}>
-            {rhythmPhases.map((phase, index) => (
-              <React.Fragment key={phase.id}>
-                <TouchableOpacity
-                  style={styles.rhythmPhaseCard}
-                  activeOpacity={0.7}
-                  onPress={() => handleRhythmPhase(phase.id)}
-                >
-                  <Image
-                    source={resolveImageSource(phase.image)}
-                    style={styles.rhythmPhaseImage}
-                    resizeMode="cover"
-                  />
-                  <View style={styles.rhythmPhaseContent}>
-                    <Text style={styles.rhythmPhaseName}>{phase.name}</Text>
-                    <Text style={styles.rhythmPhaseTime}>{phase.time}</Text>
-                  </View>
-                </TouchableOpacity>
-              </React.Fragment>
-            ))}
-          </Animated.View>
-        </ScrollView>
-      </SafeAreaView>
-    </>
+                <View style={styles.rhythmPhaseContent}>
+                  <Text style={styles.rhythmPhaseName}>{phase.name}</Text>
+                  <Text style={styles.rhythmPhaseTime}>{phase.time}</Text>
+                </View>
+              </TouchableOpacity>
+            </React.Fragment>
+          ))}
+        </Animated.View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }

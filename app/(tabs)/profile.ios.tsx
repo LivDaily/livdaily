@@ -6,9 +6,9 @@ import { IconSymbol } from "@/components/IconSymbol";
 import { useAppTheme } from "@/contexts/ThemeContext";
 import { ThemeName, themes } from "@/styles/commonStyles";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
-import { Stack, useRouter } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { userAPI } from "@/utils/api";
+import { Stack, useRouter } from "expo-router";
 
 export default function ProfileScreen() {
   const { colors, themeName, setTheme } = useAppTheme();
@@ -40,7 +40,8 @@ export default function ProfileScreen() {
       }
     } catch (error) {
       console.error('Failed to load user profile:', error);
-      Alert.alert('Error', 'Failed to load profile data. Please try again.');
+      // Don't show error alert - profile data is optional
+      setUserProfile(null);
     } finally {
       setProfileLoading(false);
     }
@@ -60,12 +61,15 @@ export default function ProfileScreen() {
     setTheme(theme);
     setShowThemeSelector(false);
     
-    try {
-      await userAPI.updateProfile({ themePreference: theme });
-      console.log('Theme preference saved to backend');
-    } catch (error) {
-      console.error('Failed to save theme preference:', error);
-      Alert.alert('Warning', 'Theme changed locally but could not be saved to server.');
+    // Only try to save to backend if user is authenticated
+    if (user) {
+      try {
+        await userAPI.updateProfile({ themePreference: theme });
+        console.log('Theme preference saved to backend');
+      } catch (error) {
+        console.error('Failed to save theme preference:', error);
+        // Don't show error - theme still works locally
+      }
     }
   };
 
@@ -153,7 +157,7 @@ export default function ProfileScreen() {
       backgroundColor: colors.background,
     },
     scrollContent: {
-      paddingBottom: 40,
+      paddingBottom: 120,
     },
     header: {
       paddingHorizontal: 24,
@@ -275,378 +279,374 @@ export default function ProfileScreen() {
   });
 
   const currentThemeLabel = themeOptions.find(t => t.name === themeName)?.label || 'Earth Tones';
-  const userName = userProfile?.name || user?.name || user?.email || 'User';
-  const userEmail = user?.email || 'No email';
+  const userName = userProfile?.name || user?.name || user?.email || 'Guest';
+  const userEmail = user?.email || 'Not signed in';
 
   if (authLoading || profileLoading) {
     return (
-      <>
-        <Stack.Screen options={{ headerShown: false }} />
-        <SafeAreaView style={styles.container} edges={['top']}>
-          <View style={styles.loadingContainer}>
-            <IconSymbol
-              ios_icon_name="person.circle"
-              android_material_icon_name="account-circle"
-              size={48}
-              color={colors.primary}
-            />
-            <Text style={styles.loadingText}>Loading profile...</Text>
-          </View>
-        </SafeAreaView>
-      </>
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <View style={styles.loadingContainer}>
+          <IconSymbol
+            ios_icon_name="person.circle"
+            android_material_icon_name="account-circle"
+            size={48}
+            color={colors.primary}
+          />
+          <Text style={styles.loadingText}>Loading profile...</Text>
+        </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <>
-      <Stack.Screen options={{ headerShown: false }} />
-      <SafeAreaView style={styles.container} edges={['top']}>
-        <ScrollView
-          style={styles.container}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          accessible={true}
-          accessibilityLabel="Profile settings screen"
-        >
-          <Animated.View entering={FadeIn.duration(600)} style={styles.header}>
-            <Text 
-              style={styles.headerTitle}
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        accessible={true}
+        accessibilityLabel="Profile settings screen"
+      >
+        <Animated.View entering={FadeIn.duration(600)} style={styles.header}>
+          <Text 
+            style={styles.headerTitle}
+            accessible={true}
+            accessibilityRole="header"
+          >
+            Settings
+          </Text>
+          <Text style={styles.headerSubtitle}>
+            Personalize your sanctuary
+          </Text>
+        </Animated.View>
+
+        <View style={styles.section}>
+          <Text 
+            style={styles.sectionTitle}
+            accessible={true}
+            accessibilityRole="header"
+          >
+            Appearance
+          </Text>
+          <Animated.View entering={FadeInDown.delay(200).duration(600)}>
+            <TouchableOpacity
+              style={styles.card}
+              onPress={() => {
+                console.log('User tapped theme selector');
+                setShowThemeSelector(!showThemeSelector);
+              }}
+              activeOpacity={0.7}
               accessible={true}
-              accessibilityRole="header"
+              accessibilityRole="button"
+              accessibilityLabel={`Color theme, currently ${currentThemeLabel}`}
+              accessibilityHint="Double tap to change color theme"
             >
-              Settings
-            </Text>
-            <Text style={styles.headerSubtitle}>
-              Personalize your sanctuary
-            </Text>
+              <View style={styles.settingRow}>
+                <View style={styles.settingLeft}>
+                  <View style={styles.iconContainer}>
+                    <IconSymbol
+                      ios_icon_name="paintbrush"
+                      android_material_icon_name="palette"
+                      size={24}
+                      color={colors.primary}
+                    />
+                  </View>
+                  <View style={styles.settingTextContainer}>
+                    <Text style={styles.settingText}>Color Theme</Text>
+                    <Text style={styles.settingSubtext}>{currentThemeLabel}</Text>
+                  </View>
+                </View>
+                <IconSymbol
+                  ios_icon_name="chevron.right"
+                  android_material_icon_name="chevron-right"
+                  size={20}
+                  color={colors.textSecondary}
+                />
+              </View>
+            </TouchableOpacity>
           </Animated.View>
 
-          <View style={styles.section}>
-            <Text 
-              style={styles.sectionTitle}
+          {showThemeSelector && (
+            <Animated.View entering={FadeInDown.duration(400)} style={styles.themeGrid}>
+              {themeOptions.map((theme, index) => {
+                const isSelected = themeName === theme.name;
+                const themeColors = themes[theme.name];
+                return (
+                  <React.Fragment key={theme.name}>
+                    <TouchableOpacity
+                      style={[styles.themeOption, isSelected && styles.themeOptionSelected]}
+                      onPress={() => handleThemeChange(theme.name)}
+                      activeOpacity={0.7}
+                      accessible={true}
+                      accessibilityRole="radio"
+                      accessibilityLabel={`${theme.label} theme, ${theme.description}`}
+                      accessibilityState={{ selected: isSelected }}
+                      accessibilityHint="Double tap to select this theme"
+                    >
+                      <View style={styles.themeOptionHeader}>
+                        <Text style={styles.themeOptionName}>{theme.label}</Text>
+                        {isSelected && (
+                          <IconSymbol
+                            ios_icon_name="checkmark.circle.fill"
+                            android_material_icon_name="check-circle"
+                            size={20}
+                            color={colors.primary}
+                          />
+                        )}
+                      </View>
+                      <Text style={styles.themeOptionDescription}>{theme.description}</Text>
+                      <View style={styles.themeColorPreview}>
+                        <View style={[styles.colorDot, { backgroundColor: themeColors.primary }]} />
+                        <View style={[styles.colorDot, { backgroundColor: themeColors.secondary }]} />
+                        <View style={[styles.colorDot, { backgroundColor: themeColors.accent }]} />
+                        <View style={[styles.colorDot, { backgroundColor: themeColors.calm }]} />
+                      </View>
+                    </TouchableOpacity>
+                  </React.Fragment>
+                );
+              })}
+            </Animated.View>
+          )}
+        </View>
+
+        <View style={styles.section}>
+          <Text 
+            style={styles.sectionTitle}
+            accessible={true}
+            accessibilityRole="header"
+          >
+            Accessibility
+          </Text>
+          <Animated.View entering={FadeInDown.delay(250).duration(600)}>
+            <TouchableOpacity 
+              style={styles.card}
+              onPress={handleAccessibilityPress}
+              activeOpacity={0.7}
               accessible={true}
-              accessibilityRole="header"
+              accessibilityRole="button"
+              accessibilityLabel="Accessibility settings"
+              accessibilityHint="Double tap to view accessibility options"
             >
-              Appearance
-            </Text>
-            <Animated.View entering={FadeInDown.delay(200).duration(600)}>
-              <TouchableOpacity
-                style={styles.card}
-                onPress={() => {
-                  console.log('User tapped theme selector');
-                  setShowThemeSelector(!showThemeSelector);
-                }}
-                activeOpacity={0.7}
-                accessible={true}
-                accessibilityRole="button"
-                accessibilityLabel={`Color theme, currently ${currentThemeLabel}`}
-                accessibilityHint="Double tap to change color theme"
-              >
-                <View style={styles.settingRow}>
-                  <View style={styles.settingLeft}>
-                    <View style={styles.iconContainer}>
-                      <IconSymbol
-                        ios_icon_name="paintbrush"
-                        android_material_icon_name="palette"
-                        size={24}
-                        color={colors.primary}
-                      />
-                    </View>
-                    <View style={styles.settingTextContainer}>
-                      <Text style={styles.settingText}>Color Theme</Text>
-                      <Text style={styles.settingSubtext}>{currentThemeLabel}</Text>
-                    </View>
+              <View style={styles.settingRow}>
+                <View style={styles.settingLeft}>
+                  <View style={styles.iconContainer}>
+                    <IconSymbol
+                      ios_icon_name="accessibility"
+                      android_material_icon_name="accessibility"
+                      size={24}
+                      color={colors.primary}
+                    />
                   </View>
-                  <IconSymbol
-                    ios_icon_name="chevron.right"
-                    android_material_icon_name="chevron-right"
-                    size={20}
-                    color={colors.textSecondary}
-                  />
+                  <View style={styles.settingTextContainer}>
+                    <Text style={styles.settingText}>Accessibility Features</Text>
+                    <Text style={styles.settingSubtext}>Font size, screen reader, contrast</Text>
+                  </View>
                 </View>
-              </TouchableOpacity>
-            </Animated.View>
+                <IconSymbol
+                  ios_icon_name="chevron.right"
+                  android_material_icon_name="chevron-right"
+                  size={20}
+                  color={colors.textSecondary}
+                />
+              </View>
+            </TouchableOpacity>
+          </Animated.View>
+        </View>
 
-            {showThemeSelector && (
-              <Animated.View entering={FadeInDown.duration(400)} style={styles.themeGrid}>
-                {themeOptions.map((theme, index) => {
-                  const isSelected = themeName === theme.name;
-                  const themeColors = themes[theme.name];
-                  return (
-                    <React.Fragment key={theme.name}>
-                      <TouchableOpacity
-                        style={[styles.themeOption, isSelected && styles.themeOptionSelected]}
-                        onPress={() => handleThemeChange(theme.name)}
-                        activeOpacity={0.7}
-                        accessible={true}
-                        accessibilityRole="radio"
-                        accessibilityLabel={`${theme.label} theme, ${theme.description}`}
-                        accessibilityState={{ selected: isSelected }}
-                        accessibilityHint="Double tap to select this theme"
-                      >
-                        <View style={styles.themeOptionHeader}>
-                          <Text style={styles.themeOptionName}>{theme.label}</Text>
-                          {isSelected && (
-                            <IconSymbol
-                              ios_icon_name="checkmark.circle.fill"
-                              android_material_icon_name="check-circle"
-                              size={20}
-                              color={colors.primary}
-                            />
-                          )}
-                        </View>
-                        <Text style={styles.themeOptionDescription}>{theme.description}</Text>
-                        <View style={styles.themeColorPreview}>
-                          <View style={[styles.colorDot, { backgroundColor: themeColors.primary }]} />
-                          <View style={[styles.colorDot, { backgroundColor: themeColors.secondary }]} />
-                          <View style={[styles.colorDot, { backgroundColor: themeColors.accent }]} />
-                          <View style={[styles.colorDot, { backgroundColor: themeColors.calm }]} />
-                        </View>
-                      </TouchableOpacity>
-                    </React.Fragment>
-                  );
-                })}
-              </Animated.View>
-            )}
-          </View>
-
-          <View style={styles.section}>
-            <Text 
-              style={styles.sectionTitle}
+        <View style={styles.section}>
+          <Text 
+            style={styles.sectionTitle}
+            accessible={true}
+            accessibilityRole="header"
+          >
+            Wellness Tools
+          </Text>
+          <Animated.View entering={FadeInDown.delay(300).duration(600)}>
+            <TouchableOpacity 
+              style={styles.card}
+              onPress={handleNotificationsPress}
+              activeOpacity={0.7}
               accessible={true}
-              accessibilityRole="header"
+              accessibilityRole="button"
+              accessibilityLabel="Presence notifications settings"
+              accessibilityHint="Double tap to manage notification preferences"
             >
-              Accessibility
-            </Text>
-            <Animated.View entering={FadeInDown.delay(250).duration(600)}>
-              <TouchableOpacity 
-                style={styles.card}
-                onPress={handleAccessibilityPress}
-                activeOpacity={0.7}
-                accessible={true}
-                accessibilityRole="button"
-                accessibilityLabel="Accessibility settings"
-                accessibilityHint="Double tap to view accessibility options"
-              >
-                <View style={styles.settingRow}>
-                  <View style={styles.settingLeft}>
-                    <View style={styles.iconContainer}>
-                      <IconSymbol
-                        ios_icon_name="accessibility"
-                        android_material_icon_name="accessibility"
-                        size={24}
-                        color={colors.primary}
-                      />
-                    </View>
-                    <View style={styles.settingTextContainer}>
-                      <Text style={styles.settingText}>Accessibility Features</Text>
-                      <Text style={styles.settingSubtext}>Font size, screen reader, contrast</Text>
-                    </View>
+              <View style={styles.settingRow}>
+                <View style={styles.settingLeft}>
+                  <View style={styles.iconContainer}>
+                    <IconSymbol
+                      ios_icon_name="bell"
+                      android_material_icon_name="notifications"
+                      size={24}
+                      color={colors.primary}
+                    />
                   </View>
-                  <IconSymbol
-                    ios_icon_name="chevron.right"
-                    android_material_icon_name="chevron-right"
-                    size={20}
-                    color={colors.textSecondary}
-                  />
+                  <View style={styles.settingTextContainer}>
+                    <Text style={styles.settingText}>Presence Notifications</Text>
+                    <Text style={styles.settingSubtext}>Gentle reminders throughout your day</Text>
+                  </View>
                 </View>
-              </TouchableOpacity>
-            </Animated.View>
-          </View>
+                <IconSymbol
+                  ios_icon_name="chevron.right"
+                  android_material_icon_name="chevron-right"
+                  size={20}
+                  color={colors.textSecondary}
+                />
+              </View>
+            </TouchableOpacity>
+          </Animated.View>
 
-          <View style={styles.section}>
-            <Text 
-              style={styles.sectionTitle}
+          <Animated.View entering={FadeInDown.delay(350).duration(600)}>
+            <TouchableOpacity 
+              style={styles.card}
+              onPress={handleTrackingPress}
+              activeOpacity={0.7}
               accessible={true}
-              accessibilityRole="header"
+              accessibilityRole="button"
+              accessibilityLabel="Tracking preferences"
+              accessibilityHint="Double tap to manage tracking settings"
             >
-              Wellness Tools
-            </Text>
-            <Animated.View entering={FadeInDown.delay(300).duration(600)}>
-              <TouchableOpacity 
-                style={styles.card}
-                onPress={handleNotificationsPress}
-                activeOpacity={0.7}
-                accessible={true}
-                accessibilityRole="button"
-                accessibilityLabel="Presence notifications settings"
-                accessibilityHint="Double tap to manage notification preferences"
-              >
-                <View style={styles.settingRow}>
-                  <View style={styles.settingLeft}>
-                    <View style={styles.iconContainer}>
-                      <IconSymbol
-                        ios_icon_name="bell"
-                        android_material_icon_name="notifications"
-                        size={24}
-                        color={colors.primary}
-                      />
-                    </View>
-                    <View style={styles.settingTextContainer}>
-                      <Text style={styles.settingText}>Presence Notifications</Text>
-                      <Text style={styles.settingSubtext}>Gentle reminders throughout your day</Text>
-                    </View>
+              <View style={styles.settingRow}>
+                <View style={styles.settingLeft}>
+                  <View style={styles.iconContainer}>
+                    <IconSymbol
+                      ios_icon_name="chart.bar"
+                      android_material_icon_name="bar-chart"
+                      size={24}
+                      color={colors.primary}
+                    />
                   </View>
-                  <IconSymbol
-                    ios_icon_name="chevron.right"
-                    android_material_icon_name="chevron-right"
-                    size={20}
-                    color={colors.textSecondary}
-                  />
-                </View>
-              </TouchableOpacity>
-            </Animated.View>
-
-            <Animated.View entering={FadeInDown.delay(350).duration(600)}>
-              <TouchableOpacity 
-                style={styles.card}
-                onPress={handleTrackingPress}
-                activeOpacity={0.7}
-                accessible={true}
-                accessibilityRole="button"
-                accessibilityLabel="Tracking preferences"
-                accessibilityHint="Double tap to manage tracking settings"
-              >
-                <View style={styles.settingRow}>
-                  <View style={styles.settingLeft}>
-                    <View style={styles.iconContainer}>
-                      <IconSymbol
-                        ios_icon_name="chart.bar"
-                        android_material_icon_name="bar-chart"
-                        size={24}
-                        color={colors.primary}
-                      />
-                    </View>
-                    <View style={styles.settingTextContainer}>
-                      <Text style={styles.settingText}>Tracking Preferences</Text>
-                      <Text style={styles.settingSubtext}>Optional wellness tracking controls</Text>
-                    </View>
+                  <View style={styles.settingTextContainer}>
+                    <Text style={styles.settingText}>Tracking Preferences</Text>
+                    <Text style={styles.settingSubtext}>Optional wellness tracking controls</Text>
                   </View>
-                  <IconSymbol
-                    ios_icon_name="chevron.right"
-                    android_material_icon_name="chevron-right"
-                    size={20}
-                    color={colors.textSecondary}
-                  />
                 </View>
-              </TouchableOpacity>
-            </Animated.View>
-          </View>
+                <IconSymbol
+                  ios_icon_name="chevron.right"
+                  android_material_icon_name="chevron-right"
+                  size={20}
+                  color={colors.textSecondary}
+                />
+              </View>
+            </TouchableOpacity>
+          </Animated.View>
+        </View>
 
-          <View style={styles.section}>
-            <Text 
-              style={styles.sectionTitle}
+        <View style={styles.section}>
+          <Text 
+            style={styles.sectionTitle}
+            accessible={true}
+            accessibilityRole="header"
+          >
+            Privacy & Support
+          </Text>
+          <Animated.View entering={FadeInDown.delay(400).duration(600)}>
+            <TouchableOpacity 
+              style={styles.card}
+              onPress={handlePrivacyPress}
+              activeOpacity={0.7}
               accessible={true}
-              accessibilityRole="header"
+              accessibilityRole="button"
+              accessibilityLabel="Privacy settings"
+              accessibilityHint="Double tap to manage privacy and data settings"
             >
-              Privacy & Support
-            </Text>
-            <Animated.View entering={FadeInDown.delay(400).duration(600)}>
-              <TouchableOpacity 
-                style={styles.card}
-                onPress={handlePrivacyPress}
-                activeOpacity={0.7}
-                accessible={true}
-                accessibilityRole="button"
-                accessibilityLabel="Privacy settings"
-                accessibilityHint="Double tap to manage privacy and data settings"
-              >
-                <View style={styles.settingRow}>
-                  <View style={styles.settingLeft}>
-                    <View style={styles.iconContainer}>
-                      <IconSymbol
-                        ios_icon_name="lock.shield"
-                        android_material_icon_name="security"
-                        size={24}
-                        color={colors.primary}
-                      />
-                    </View>
-                    <View style={styles.settingTextContainer}>
-                      <Text style={styles.settingText}>Privacy Settings</Text>
-                      <Text style={styles.settingSubtext}>Data control, permissions, export</Text>
-                    </View>
+              <View style={styles.settingRow}>
+                <View style={styles.settingLeft}>
+                  <View style={styles.iconContainer}>
+                    <IconSymbol
+                      ios_icon_name="lock.shield"
+                      android_material_icon_name="security"
+                      size={24}
+                      color={colors.primary}
+                    />
                   </View>
-                  <IconSymbol
-                    ios_icon_name="chevron.right"
-                    android_material_icon_name="chevron-right"
-                    size={20}
-                    color={colors.textSecondary}
-                  />
-                </View>
-              </TouchableOpacity>
-            </Animated.View>
-
-            <Animated.View entering={FadeInDown.delay(450).duration(600)}>
-              <TouchableOpacity 
-                style={styles.card}
-                onPress={handleSupportPress}
-                activeOpacity={0.7}
-                accessible={true}
-                accessibilityRole="button"
-                accessibilityLabel="Support and help"
-                accessibilityHint="Double tap to access support resources"
-              >
-                <View style={styles.settingRow}>
-                  <View style={styles.settingLeft}>
-                    <View style={styles.iconContainer}>
-                      <IconSymbol
-                        ios_icon_name="questionmark.circle"
-                        android_material_icon_name="help"
-                        size={24}
-                        color={colors.primary}
-                      />
-                    </View>
-                    <View style={styles.settingTextContainer}>
-                      <Text style={styles.settingText}>Support & Help</Text>
-                      <Text style={styles.settingSubtext}>FAQ, contact us, report issues</Text>
-                    </View>
+                  <View style={styles.settingTextContainer}>
+                    <Text style={styles.settingText}>Privacy Settings</Text>
+                    <Text style={styles.settingSubtext}>Data control, permissions, export</Text>
                   </View>
-                  <IconSymbol
-                    ios_icon_name="chevron.right"
-                    android_material_icon_name="chevron-right"
-                    size={20}
-                    color={colors.textSecondary}
-                  />
                 </View>
-              </TouchableOpacity>
-            </Animated.View>
+                <IconSymbol
+                  ios_icon_name="chevron.right"
+                  android_material_icon_name="chevron-right"
+                  size={20}
+                  color={colors.textSecondary}
+                />
+              </View>
+            </TouchableOpacity>
+          </Animated.View>
 
-            <Animated.View entering={FadeInDown.delay(500).duration(600)}>
-              <TouchableOpacity 
-                style={styles.card}
-                onPress={handleAboutPress}
-                activeOpacity={0.7}
-                accessible={true}
-                accessibilityRole="button"
-                accessibilityLabel="About LivDaily, version 1.0.0"
-                accessibilityHint="Double tap to view app information"
-              >
-                <View style={styles.settingRow}>
-                  <View style={styles.settingLeft}>
-                    <View style={styles.iconContainer}>
-                      <IconSymbol
-                        ios_icon_name="info.circle"
-                        android_material_icon_name="info"
-                        size={24}
-                        color={colors.primary}
-                      />
-                    </View>
-                    <View style={styles.settingTextContainer}>
-                      <Text style={styles.settingText}>About LivDaily</Text>
-                      <Text style={styles.settingSubtext}>Version 1.0.0</Text>
-                    </View>
+          <Animated.View entering={FadeInDown.delay(450).duration(600)}>
+            <TouchableOpacity 
+              style={styles.card}
+              onPress={handleSupportPress}
+              activeOpacity={0.7}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel="Support and help"
+              accessibilityHint="Double tap to access support resources"
+            >
+              <View style={styles.settingRow}>
+                <View style={styles.settingLeft}>
+                  <View style={styles.iconContainer}>
+                    <IconSymbol
+                      ios_icon_name="questionmark.circle"
+                      android_material_icon_name="help"
+                      size={24}
+                      color={colors.primary}
+                    />
                   </View>
-                  <IconSymbol
-                    ios_icon_name="chevron.right"
-                    android_material_icon_name="chevron-right"
-                    size={20}
-                    color={colors.textSecondary}
-                  />
+                  <View style={styles.settingTextContainer}>
+                    <Text style={styles.settingText}>Support & Help</Text>
+                    <Text style={styles.settingSubtext}>FAQ, contact us, report issues</Text>
+                  </View>
                 </View>
-              </TouchableOpacity>
-            </Animated.View>
-          </View>
+                <IconSymbol
+                  ios_icon_name="chevron.right"
+                  android_material_icon_name="chevron-right"
+                  size={20}
+                  color={colors.textSecondary}
+                />
+              </View>
+            </TouchableOpacity>
+          </Animated.View>
 
+          <Animated.View entering={FadeInDown.delay(500).duration(600)}>
+            <TouchableOpacity 
+              style={styles.card}
+              onPress={handleAboutPress}
+              activeOpacity={0.7}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel="About LivDaily, version 1.0.0"
+              accessibilityHint="Double tap to view app information"
+            >
+              <View style={styles.settingRow}>
+                <View style={styles.settingLeft}>
+                  <View style={styles.iconContainer}>
+                    <IconSymbol
+                      ios_icon_name="info.circle"
+                      android_material_icon_name="info"
+                      size={24}
+                      color={colors.primary}
+                    />
+                  </View>
+                  <View style={styles.settingTextContainer}>
+                    <Text style={styles.settingText}>About LivDaily</Text>
+                    <Text style={styles.settingSubtext}>Version 1.0.0</Text>
+                  </View>
+                </View>
+                <IconSymbol
+                  ios_icon_name="chevron.right"
+                  android_material_icon_name="chevron-right"
+                  size={20}
+                  color={colors.textSecondary}
+                />
+              </View>
+            </TouchableOpacity>
+          </Animated.View>
+        </View>
+
+        {user && (
           <View style={styles.section}>
             <Text 
               style={styles.sectionTitle}
@@ -655,32 +655,30 @@ export default function ProfileScreen() {
             >
               Account
             </Text>
-            {user && (
-              <Animated.View entering={FadeInDown.delay(600).duration(600)}>
-                <View 
-                  style={styles.card}
-                  accessible={true}
-                  accessibilityLabel={`Account information, ${userName}, ${userEmail}`}
-                >
-                  <View style={styles.settingRow}>
-                    <View style={styles.settingLeft}>
-                      <View style={styles.iconContainer}>
-                        <IconSymbol
-                          ios_icon_name="person.circle"
-                          android_material_icon_name="account-circle"
-                          size={24}
-                          color={colors.primary}
-                        />
-                      </View>
-                      <View style={styles.settingTextContainer}>
-                        <Text style={styles.settingText}>{userName}</Text>
-                        <Text style={styles.settingSubtext}>{userEmail}</Text>
-                      </View>
+            <Animated.View entering={FadeInDown.delay(600).duration(600)}>
+              <View 
+                style={styles.card}
+                accessible={true}
+                accessibilityLabel={`Account information, ${userName}, ${userEmail}`}
+              >
+                <View style={styles.settingRow}>
+                  <View style={styles.settingLeft}>
+                    <View style={styles.iconContainer}>
+                      <IconSymbol
+                        ios_icon_name="person.circle"
+                        android_material_icon_name="account-circle"
+                        size={24}
+                        color={colors.primary}
+                      />
+                    </View>
+                    <View style={styles.settingTextContainer}>
+                      <Text style={styles.settingText}>{userName}</Text>
+                      <Text style={styles.settingSubtext}>{userEmail}</Text>
                     </View>
                   </View>
                 </View>
-              </Animated.View>
-            )}
+              </View>
+            </Animated.View>
 
             <Animated.View entering={FadeInDown.delay(650).duration(600)}>
               <TouchableOpacity 
@@ -710,8 +708,8 @@ export default function ProfileScreen() {
               </TouchableOpacity>
             </Animated.View>
           </View>
-        </ScrollView>
-      </SafeAreaView>
-    </>
+        )}
+      </ScrollView>
+    </SafeAreaView>
   );
 }

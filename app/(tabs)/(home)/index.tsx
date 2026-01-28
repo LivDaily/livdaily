@@ -105,11 +105,10 @@ export default function HomeScreen() {
   useEffect(() => {
     console.log('HomeScreen mounted - determining current rhythm phase');
     determineCurrentPhase();
-    loadWeeklyMotivation();
     
-    // Redirect to auth if not logged in
-    if (!authLoading && !user) {
-      router.replace('/auth');
+    // Only load motivation if user is authenticated
+    if (user) {
+      loadWeeklyMotivation();
     }
   }, [user, authLoading]);
 
@@ -121,6 +120,7 @@ export default function HomeScreen() {
       }
     } catch (error) {
       console.error('Failed to load weekly motivation:', error);
+      // Don't show error to user - motivation is optional
     }
   };
 
