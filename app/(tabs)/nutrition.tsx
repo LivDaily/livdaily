@@ -56,13 +56,14 @@ export default function NutritionScreen() {
       const data = await nutritionAPI.getTasks(today);
       
       if (!data || data.length === 0) {
-        console.log('No tasks found, generating AI tasks');
-        await generateAITasks();
+        console.log('No tasks found - using empty state');
+        setTasks([]);
       } else {
         setTasks(data);
       }
     } catch (error) {
       console.error('Failed to load nutrition tasks:', error);
+      setTasks([]);
     }
   };
 
@@ -74,6 +75,12 @@ export default function NutritionScreen() {
       const response = await aiAPI.generateNutritionTasks({
         date: today,
       });
+
+      if (!response) {
+        Alert.alert('Sign In Required', 'Please sign in to generate personalized nutrition tasks');
+        setLoading(false);
+        return;
+      }
 
       if (response?.tasks && Array.isArray(response.tasks)) {
         for (const task of response.tasks) {
@@ -97,10 +104,15 @@ export default function NutritionScreen() {
     console.log('User toggled task:', task.id);
     try {
       const newCompleted = !task.completed;
-      await nutritionAPI.updateTask(task.id, {
+      const result = await nutritionAPI.updateTask(task.id, {
         completed: newCompleted,
         completedAt: newCompleted ? new Date().toISOString() : undefined,
       });
+
+      if (!result) {
+        Alert.alert('Sign In Required', 'Please sign in to track nutrition tasks');
+        return;
+      }
 
       setTasks(tasks.map(t => 
         t.id === task.id 

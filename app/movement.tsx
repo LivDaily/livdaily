@@ -56,12 +56,13 @@ export default function MovementScreen() {
         movementAPI.getLogs(),
         movementAPI.getStats('week'),
       ]);
-      setLogs(logsData);
-      setStats(statsData);
+      setLogs(logsData || []);
+      setStats(statsData || null);
       console.log('Movement data loaded successfully');
     } catch (error) {
       console.error('Failed to load movement data:', error);
-      Alert.alert('Error', 'Failed to load movement data');
+      setLogs([]);
+      setStats(null);
     } finally {
       setLoading(false);
     }
@@ -81,11 +82,16 @@ export default function MovementScreen() {
 
     try {
       console.log('Creating movement log:', { activityType, durationMinutes: durationNum });
-      await movementAPI.createLog({
+      const result = await movementAPI.createLog({
         activityType: activityType.trim(),
         durationMinutes: durationNum,
         notes: notes.trim() || undefined,
       });
+      
+      if (!result) {
+        Alert.alert('Sign In Required', 'Please sign in to log movement activities');
+        return;
+      }
       
       setActivityType('');
       setDuration('');

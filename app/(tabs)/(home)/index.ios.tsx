@@ -117,9 +117,12 @@ export default function HomeScreen() {
       const data = await motivationAPI.getCurrent();
       if (data?.content) {
         setWeeklyMotivation(data.content);
+      } else {
+        setWeeklyMotivation('');
       }
     } catch (error) {
       console.error('Failed to load weekly motivation:', error);
+      setWeeklyMotivation('');
     }
   };
 

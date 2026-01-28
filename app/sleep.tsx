@@ -61,12 +61,13 @@ export default function SleepScreen() {
         sleepAPI.getLogs(),
         sleepAPI.getStats('week'),
       ]);
-      setLogs(logsData);
-      setStats(statsData);
+      setLogs(logsData || []);
+      setStats(statsData || null);
       console.log('Sleep data loaded successfully');
     } catch (error) {
       console.error('Failed to load sleep data:', error);
-      Alert.alert('Error', 'Failed to load sleep data');
+      setLogs([]);
+      setStats(null);
     } finally {
       setLoading(false);
     }
@@ -79,13 +80,18 @@ export default function SleepScreen() {
       bedtime.setHours(22, 0, 0, 0);
       
       console.log('Creating sleep log:', { qualityRating, windDownActivity });
-      await sleepAPI.createLog({
+      const result = await sleepAPI.createLog({
         bedtime: bedtime.toISOString(),
         qualityRating,
         windDownActivity: windDownActivity.trim() || undefined,
         reflection: reflection.trim() || undefined,
         date: now.toISOString().split('T')[0],
       });
+      
+      if (!result) {
+        Alert.alert('Sign In Required', 'Please sign in to log sleep data');
+        return;
+      }
       
       setQualityRating(5);
       setWindDownActivity('');

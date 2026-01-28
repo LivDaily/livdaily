@@ -54,11 +54,51 @@ export default function MindfulnessScreen() {
         mindfulnessAPI.getSubscription(),
       ]);
       
-      setContent(contentData || []);
+      // Use mock data if API returns null (unauthenticated) or empty
+      if (!contentData || contentData.length === 0) {
+        console.log('Using mock mindfulness content (not authenticated or no data)');
+        const mockContent: MindfulnessContent[] = [
+          {
+            id: '1',
+            title: 'Morning Meditation',
+            content: 'Start your day with a peaceful 10-minute guided meditation. Find a comfortable seat, close your eyes, and focus on your breath. Let thoughts pass like clouds in the sky.',
+            contentType: 'meditation',
+            category: 'morning',
+            duration: 10,
+            aiGenerated: false,
+            isActive: true,
+          },
+          {
+            id: '2',
+            title: 'Breathing Exercise',
+            content: 'A simple breathing technique to center yourself. Inhale for 4 counts, hold for 4, exhale for 4, hold for 4. Repeat this cycle 5 times.',
+            contentType: 'breathing',
+            category: 'anytime',
+            duration: 5,
+            aiGenerated: false,
+            isActive: true,
+          },
+          {
+            id: '3',
+            title: 'Evening Wind Down',
+            content: 'Gentle practices to prepare for restful sleep. Release the day with body scan meditation, progressive muscle relaxation, and gratitude reflection.',
+            contentType: 'meditation',
+            category: 'evening',
+            duration: 15,
+            aiGenerated: false,
+            isActive: true,
+          },
+        ];
+        setContent(mockContent);
+      } else {
+        setContent(contentData);
+      }
+      
       setSubscription(subscriptionData || { subscriptionType: 'free', status: 'active' });
     } catch (error) {
       console.error('Failed to load mindfulness data:', error);
       
+      // Fallback to mock data on error
       const mockContent: MindfulnessContent[] = [
         {
           id: '1',

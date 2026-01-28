@@ -51,6 +51,7 @@ export default function GroundingScreen() {
       setSessions(data || []);
     } catch (error) {
       console.error('Failed to load grounding sessions:', error);
+      setSessions([]);
     }
   };
 

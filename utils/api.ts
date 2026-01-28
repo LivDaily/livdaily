@@ -37,6 +37,14 @@ export async function apiCall<T = any>(
       const status = error.response.status;
       const errorText = await error.response.text().catch(() => "Unknown error");
       console.error(`❌ API Error: ${status}`, errorText);
+      
+      // For 401 errors, return null instead of throwing
+      // This allows components to handle unauthenticated state gracefully
+      if (status === 401) {
+        console.log(`⚠️ Unauthenticated request to ${endpoint} - returning null`);
+        return null as T;
+      }
+      
       throw new Error(`API Error: ${status} - ${errorText}`);
     }
     

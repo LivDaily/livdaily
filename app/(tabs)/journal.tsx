@@ -88,16 +88,17 @@ export default function JournalScreen() {
   const generateAIPrompt = async () => {
     console.log('Generating AI journal prompt');
     
+    const fallbackPrompts = [
+      'What are you noticing in your body right now?',
+      'What would feel supportive today?',
+      'What are you grateful for in this moment?',
+      'What do you need to release?',
+      'How are you arriving to yourself today?',
+    ];
+    
     // Use fallback prompts if not authenticated
     if (!user) {
-      const prompts = [
-        'What are you noticing in your body right now?',
-        'What would feel supportive today?',
-        'What are you grateful for in this moment?',
-        'What do you need to release?',
-        'How are you arriving to yourself today?',
-      ];
-      const randomPrompt = prompts[Math.floor(Math.random() * prompts.length)];
+      const randomPrompt = fallbackPrompts[Math.floor(Math.random() * fallbackPrompts.length)];
       setAiPrompt(randomPrompt);
       return;
     }
@@ -119,26 +120,12 @@ export default function JournalScreen() {
       if (response?.prompt) {
         setAiPrompt(response.prompt);
       } else {
-        const prompts = [
-          'What are you noticing in your body right now?',
-          'What would feel supportive today?',
-          'What are you grateful for in this moment?',
-          'What do you need to release?',
-          'How are you arriving to yourself today?',
-        ];
-        const randomPrompt = prompts[Math.floor(Math.random() * prompts.length)];
+        const randomPrompt = fallbackPrompts[Math.floor(Math.random() * fallbackPrompts.length)];
         setAiPrompt(randomPrompt);
       }
     } catch (error) {
       console.error('Failed to generate AI prompt:', error);
-      const prompts = [
-        'What are you noticing in your body right now?',
-        'What would feel supportive today?',
-        'What are you grateful for in this moment?',
-        'What do you need to release?',
-        'How are you arriving to yourself today?',
-      ];
-      const randomPrompt = prompts[Math.floor(Math.random() * prompts.length)];
+      const randomPrompt = fallbackPrompts[Math.floor(Math.random() * fallbackPrompts.length)];
       setAiPrompt(randomPrompt);
     }
   };
