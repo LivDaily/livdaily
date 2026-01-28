@@ -118,8 +118,8 @@ export default function GroundingScreen() {
     typeGrid: {
       flexDirection: 'row',
       flexWrap: 'wrap',
-      gap: 8,
       marginBottom: 24,
+      marginHorizontal: -4,
     },
     typeChip: {
       flexDirection: 'row',
@@ -130,7 +130,7 @@ export default function GroundingScreen() {
       borderWidth: 2,
       borderColor: colors.highlight,
       backgroundColor: colors.background,
-      gap: 6,
+      margin: 4,
     },
     typeChipSelected: {
       borderColor: colors.primary,
@@ -140,6 +140,7 @@ export default function GroundingScreen() {
       fontSize: 14,
       fontWeight: '500',
       color: colors.text,
+      marginLeft: 6,
     },
     typeChipTextSelected: {
       color: '#FFFFFF',
@@ -147,8 +148,8 @@ export default function GroundingScreen() {
     durationGrid: {
       flexDirection: 'row',
       flexWrap: 'wrap',
-      gap: 8,
       marginBottom: 24,
+      marginHorizontal: -4,
     },
     durationChip: {
       paddingVertical: 10,
@@ -157,6 +158,7 @@ export default function GroundingScreen() {
       borderWidth: 2,
       borderColor: colors.highlight,
       backgroundColor: colors.background,
+      margin: 4,
     },
     durationChipSelected: {
       borderColor: colors.primary,
@@ -256,26 +258,25 @@ export default function GroundingScreen() {
             {sessionTypes.map((type) => {
               const isSelected = selectedType === type.id;
               return (
-                <React.Fragment key={type.id}>
-                  <TouchableOpacity
-                    style={[styles.typeChip, isSelected && styles.typeChipSelected]}
-                    onPress={() => {
-                      console.log('User selected session type:', type.id);
-                      setSelectedType(type.id);
-                    }}
-                    activeOpacity={0.7}
-                  >
-                    <IconSymbol
-                      ios_icon_name={type.icon}
-                      android_material_icon_name={type.androidIcon}
-                      size={16}
-                      color={isSelected ? '#FFFFFF' : colors.text}
-                    />
-                    <Text style={[styles.typeChipText, isSelected && styles.typeChipTextSelected]}>
-                      {type.label}
-                    </Text>
-                  </TouchableOpacity>
-                </React.Fragment>
+                <TouchableOpacity
+                  key={type.id}
+                  style={[styles.typeChip, isSelected && styles.typeChipSelected]}
+                  onPress={() => {
+                    console.log('User selected session type:', type.id);
+                    setSelectedType(type.id);
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <IconSymbol
+                    ios_icon_name={type.icon}
+                    android_material_icon_name={type.androidIcon}
+                    size={16}
+                    color={isSelected ? '#FFFFFF' : colors.text}
+                  />
+                  <Text style={[styles.typeChipText, isSelected && styles.typeChipTextSelected]}>
+                    {type.label}
+                  </Text>
+                </TouchableOpacity>
               );
             })}
           </View>
@@ -286,20 +287,19 @@ export default function GroundingScreen() {
               const isSelected = selectedDuration === duration;
               const durationText = `${duration} min`;
               return (
-                <React.Fragment key={duration}>
-                  <TouchableOpacity
-                    style={[styles.durationChip, isSelected && styles.durationChipSelected]}
-                    onPress={() => {
-                      console.log('User selected duration:', duration);
-                      setSelectedDuration(duration);
-                    }}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={[styles.durationChipText, isSelected && styles.durationChipTextSelected]}>
-                      {durationText}
-                    </Text>
-                  </TouchableOpacity>
-                </React.Fragment>
+                <TouchableOpacity
+                  key={duration}
+                  style={[styles.durationChip, isSelected && styles.durationChipSelected]}
+                  onPress={() => {
+                    console.log('User selected duration:', duration);
+                    setSelectedDuration(duration);
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.durationChipText, isSelected && styles.durationChipTextSelected]}>
+                    {durationText}
+                  </Text>
+                </TouchableOpacity>
               );
             })}
           </View>
@@ -332,18 +332,17 @@ export default function GroundingScreen() {
               const formattedDate = formatDate(session.completedAt);
               const durationText = `${session.durationMinutes} min`;
               return (
-                <React.Fragment key={session.id}>
-                  <Animated.View
-                    entering={FadeInDown.delay(index * 100).duration(600)}
-                    style={styles.sessionCard}
-                  >
-                    <View style={styles.sessionHeader}>
-                      <Text style={styles.sessionType}>{session.sessionType}</Text>
-                      <Text style={styles.sessionDuration}>{durationText}</Text>
-                    </View>
-                    <Text style={styles.sessionDate}>{formattedDate}</Text>
-                  </Animated.View>
-                </React.Fragment>
+                <Animated.View
+                  key={session.id}
+                  entering={FadeInDown.delay(index * 100).duration(600)}
+                  style={styles.sessionCard}
+                >
+                  <View style={styles.sessionHeader}>
+                    <Text style={styles.sessionType}>{session.sessionType}</Text>
+                    <Text style={styles.sessionDuration}>{durationText}</Text>
+                  </View>
+                  <Text style={styles.sessionDate}>{formattedDate}</Text>
+                </Animated.View>
               );
             })
           )}

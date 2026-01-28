@@ -107,7 +107,6 @@ export default function HomeScreen() {
   }, []);
 
   useEffect(() => {
-    // Only load motivation if user is authenticated
     if (user && !authLoading) {
       console.log('User authenticated, loading weekly motivation');
       loadWeeklyMotivation();
@@ -122,7 +121,6 @@ export default function HomeScreen() {
       }
     } catch (error) {
       console.error('Failed to load weekly motivation:', error);
-      // Don't show error to user - motivation is optional
     }
   };
 
@@ -177,7 +175,6 @@ export default function HomeScreen() {
 
   const handleRhythmPhase = (phaseId: string) => {
     console.log('User tapped rhythm phase:', phaseId);
-    // Navigate based on phase
     if (phaseId === 'morning' || phaseId === 'midday') {
       router.push('/(tabs)/grounding');
     } else if (phaseId === 'afternoon') {
@@ -267,7 +264,6 @@ export default function HomeScreen() {
       flexDirection: 'row',
       flexWrap: 'wrap',
       paddingHorizontal: 16,
-      gap: 12,
     },
     quickActionCard: {
       width: (width - 56) / 2,
@@ -280,6 +276,7 @@ export default function HomeScreen() {
       shadowOpacity: 0.08,
       shadowRadius: 12,
       elevation: 3,
+      margin: 6,
     },
     quickActionIcon: {
       marginBottom: 12,
@@ -298,7 +295,6 @@ export default function HomeScreen() {
     },
     rhythmPhasesContainer: {
       paddingHorizontal: 24,
-      gap: 12,
     },
     rhythmPhaseCard: {
       backgroundColor: colors.card,
@@ -311,6 +307,7 @@ export default function HomeScreen() {
       shadowOpacity: 0.08,
       shadowRadius: 12,
       elevation: 3,
+      marginBottom: 12,
     },
     rhythmPhaseImage: {
       width: 100,
@@ -397,7 +394,7 @@ export default function HomeScreen() {
         <Text style={styles.sectionTitle}>Quick Actions</Text>
         <Animated.View entering={FadeInDown.delay(400).duration(600)} style={styles.quickActionsGrid}>
           <TouchableOpacity
-            style={[styles.quickActionCard, { backgroundColor: colors.card }]}
+            style={styles.quickActionCard}
             onPress={handleGroundingTimer}
             activeOpacity={0.7}
           >
@@ -414,7 +411,7 @@ export default function HomeScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.quickActionCard, { backgroundColor: colors.card }]}
+            style={styles.quickActionCard}
             onPress={handleMovement}
             activeOpacity={0.7}
           >
@@ -431,7 +428,7 @@ export default function HomeScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.quickActionCard, { backgroundColor: colors.card }]}
+            style={styles.quickActionCard}
             onPress={handleNutrition}
             activeOpacity={0.7}
           >
@@ -448,7 +445,7 @@ export default function HomeScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.quickActionCard, { backgroundColor: colors.card }]}
+            style={styles.quickActionCard}
             onPress={handleSleep}
             activeOpacity={0.7}
           >
@@ -465,35 +462,34 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </Animated.View>
 
-        {weeklyMotivation && (
+        {weeklyMotivation ? (
           <>
             <Text style={styles.sectionTitle}>This Week&apos;s Inspiration</Text>
             <Animated.View entering={FadeInDown.delay(600).duration(600)} style={styles.motivationCard}>
               <Text style={styles.motivationText}>{weeklyMotivation}</Text>
             </Animated.View>
           </>
-        )}
+        ) : null}
 
         <Text style={styles.sectionTitle}>Your Daily Rhythm</Text>
         <Animated.View entering={FadeInDown.delay(600).duration(600)} style={styles.rhythmPhasesContainer}>
-          {rhythmPhases.map((phase, index) => (
-            <React.Fragment key={phase.id}>
-              <TouchableOpacity
-                style={styles.rhythmPhaseCard}
-                activeOpacity={0.7}
-                onPress={() => handleRhythmPhase(phase.id)}
-              >
-                <Image
-                  source={resolveImageSource(phase.image)}
-                  style={styles.rhythmPhaseImage}
-                  resizeMode="cover"
-                />
-                <View style={styles.rhythmPhaseContent}>
-                  <Text style={styles.rhythmPhaseName}>{phase.name}</Text>
-                  <Text style={styles.rhythmPhaseTime}>{phase.time}</Text>
-                </View>
-              </TouchableOpacity>
-            </React.Fragment>
+          {rhythmPhases.map((phase) => (
+            <TouchableOpacity
+              key={phase.id}
+              style={styles.rhythmPhaseCard}
+              activeOpacity={0.7}
+              onPress={() => handleRhythmPhase(phase.id)}
+            >
+              <Image
+                source={resolveImageSource(phase.image)}
+                style={styles.rhythmPhaseImage}
+                resizeMode="cover"
+              />
+              <View style={styles.rhythmPhaseContent}>
+                <Text style={styles.rhythmPhaseName}>{phase.name}</Text>
+                <Text style={styles.rhythmPhaseTime}>{phase.time}</Text>
+              </View>
+            </TouchableOpacity>
           ))}
         </Animated.View>
       </ScrollView>
