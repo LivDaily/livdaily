@@ -8,42 +8,38 @@ console.log("🔗 Backend URL configured:", BACKEND_URL);
 
 /**
  * Helper function to make authenticated API calls
+ * Uses Better Auth's built-in fetch which automatically handles authentication
  */
 export async function apiCall<T = any>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
   try {
-    const session = await authClient.getSession();
-    
-    const headers: HeadersInit = {
-      "Content-Type": "application/json",
-      ...options.headers,
-    };
-
-    if (session?.data?.session?.token) {
-      headers["Authorization"] = `Bearer ${session.data.session.token}`;
-    }
-
     const url = `${BACKEND_URL}${endpoint}`;
     console.log(`🌐 API Call: ${options.method || "GET"} ${url}`);
 
-    const response = await fetch(url, {
+    // Use Better Auth's fetch method which automatically includes auth headers
+    const response = await authClient.$fetch(url, {
       ...options,
-      headers,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`❌ API Error: ${response.status} ${response.statusText}`, errorText);
-      throw new Error(`API Error: ${response.status} ${response.statusText}`);
-    }
-
-    const data = await response.json();
     console.log(`✅ API Success: ${options.method || "GET"} ${url}`);
-    return data;
-  } catch (error) {
+    return response as T;
+  } catch (error: any) {
     console.error(`❌ API Call Failed: ${endpoint}`, error);
+    
+    // Better Auth throws errors with response property
+    if (error.response) {
+      const status = error.response.status;
+      const errorText = await error.response.text().catch(() => "Unknown error");
+      console.error(`❌ API Error: ${status}`, errorText);
+      throw new Error(`API Error: ${status} - ${errorText}`);
+    }
+    
     throw error;
   }
 }
@@ -331,24 +327,22 @@ export const mediaAPI = {
   },
 
   uploadMedia: async (formData: FormData) => {
-    const session = await authClient.getSession();
-    const headers: HeadersInit = {};
-    
-    if (session?.data?.session?.token) {
-      headers["Authorization"] = `Bearer ${session.data.session.token}`;
+    try {
+      console.log("🌐 API Call: POST /api/media/upload");
+      
+      // Use Better Auth's fetch for authenticated upload
+      // Note: Don't set Content-Type for FormData - browser will set it with boundary
+      const response = await authClient.$fetch(`${BACKEND_URL}/api/media/upload`, {
+        method: "POST",
+        body: formData,
+      });
+
+      console.log("✅ Media upload successful");
+      return response;
+    } catch (error: any) {
+      console.error("❌ Media upload failed:", error);
+      throw new Error(`Upload failed: ${error.message || "Unknown error"}`);
     }
-
-    const response = await fetch(`${BACKEND_URL}/api/media/upload`, {
-      method: "POST",
-      headers,
-      body: formData,
-    });
-
-    if (!response.ok) {
-      throw new Error(`Upload failed: ${response.statusText}`);
-    }
-
-    return response.json();
   },
 };
 
