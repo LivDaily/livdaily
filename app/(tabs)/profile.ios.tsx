@@ -16,7 +16,6 @@ export default function ProfileScreen() {
   const router = useRouter();
   const [showThemeSelector, setShowThemeSelector] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
 
   useEffect(() => {
@@ -31,18 +30,10 @@ export default function ProfileScreen() {
     console.log('Loading user profile data from backend');
     setProfileLoading(true);
     try {
-      const [profile, userData] = await Promise.all([
-        userAPI.getProfile(),
-        userAPI.getMe(),
-      ]);
+      const profile = await userAPI.getProfile();
       
-      console.log('User profile loaded:', { profile, userData });
+      console.log('User profile loaded:', { profile });
       setUserProfile(profile);
-      
-      if (userData?.role === 'admin') {
-        console.log('User has admin role');
-        setIsAdmin(true);
-      }
       
       if (profile?.themePreference && profile.themePreference !== themeName) {
         setTheme(profile.themePreference as ThemeName);
@@ -655,55 +646,6 @@ export default function ProfileScreen() {
               </TouchableOpacity>
             </Animated.View>
           </View>
-
-          {isAdmin && (
-            <View style={styles.section}>
-              <Text 
-                style={styles.sectionTitle}
-                accessible={true}
-                accessibilityRole="header"
-              >
-                Admin
-              </Text>
-              <Animated.View entering={FadeInDown.delay(550).duration(600)}>
-                <TouchableOpacity 
-                  style={styles.card} 
-                  activeOpacity={0.7}
-                  onPress={() => {
-                    console.log('User tapped Admin Panel');
-                    router.push('/admin');
-                  }}
-                  accessible={true}
-                  accessibilityRole="button"
-                  accessibilityLabel="Admin panel"
-                  accessibilityHint="Double tap to manage app content"
-                >
-                  <View style={styles.settingRow}>
-                    <View style={styles.settingLeft}>
-                      <View style={styles.iconContainer}>
-                        <IconSymbol
-                          ios_icon_name="shield.checkered"
-                          android_material_icon_name="admin-panel-settings"
-                          size={24}
-                          color={colors.primary}
-                        />
-                      </View>
-                      <View style={styles.settingTextContainer}>
-                        <Text style={styles.settingText}>Admin Panel</Text>
-                        <Text style={styles.settingSubtext}>Manage app content</Text>
-                      </View>
-                    </View>
-                    <IconSymbol
-                      ios_icon_name="chevron.right"
-                      android_material_icon_name="chevron-right"
-                      size={20}
-                      color={colors.textSecondary}
-                    />
-                  </View>
-                </TouchableOpacity>
-              </Animated.View>
-            </View>
-          )}
 
           <View style={styles.section}>
             <Text 

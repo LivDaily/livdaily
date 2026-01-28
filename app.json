@@ -54,7 +54,7 @@
       "expo-router",
       "expo-web-browser"
     ],
-    "scheme": "natively",
+    "scheme": "LivDaily",
     "experiments": {
       "typedRoutes": true
     },
