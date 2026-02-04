@@ -4,11 +4,11 @@
     "slug": "LivDaily",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/natively-dark.png",
+    "icon": "./assets/images/LivDaily.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/images/natively-dark.png",
+      "image": "./assets/images/LivDaily.png",
       "resizeMode": "contain",
       "backgroundColor": "#000000"
     },
@@ -33,7 +33,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/natively-dark.png",
+        "foregroundImage": "./assets/images/LivDaily.png",
         "backgroundColor": "#000000"
       },
       "edgeToEdgeEnabled": true,
