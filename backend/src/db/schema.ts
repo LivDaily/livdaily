@@ -22,17 +22,8 @@ export const dailyRhythms = pgTable('daily_rhythms', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
-// Journal Entries - User-written reflections with mood and energy tracking
-export const journalEntries = pgTable('journal_entries', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
-  content: text('content').notNull(),
-  mood: text('mood'),
-  energyLevel: text('energy_level'),
-  promptUsed: text('prompt_used'),
-  rhythmPhase: text('rhythm_phase'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-});
+// NOTE: journalEntries is now defined in liqdaily-schema.ts with the new structure
+// The old journalEntries table is no longer used
 
 // Movement Logs - Track physical activities and exercises
 export const movementLogs = pgTable('movement_logs', {
