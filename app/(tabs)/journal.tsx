@@ -11,7 +11,6 @@ import {
   ImageSourcePropType,
   Platform,
   KeyboardAvoidingView,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { IconSymbol } from '@/components/IconSymbol';
@@ -20,6 +19,7 @@ import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { journalAPI, aiAPI } from '@/utils/api';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
+import { LoadingState, ErrorState, EmptyState, useAlert } from '@/components/LoadingButton';
 
 function resolveImageSource(source: string | number | ImageSourcePropType | undefined): ImageSourcePropType {
   if (!source) return { uri: '' };
@@ -40,12 +40,16 @@ export default function JournalScreen() {
   const { colors } = useAppTheme();
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
+  const { showAlert, AlertComponent } = useAlert();
   const [isWriting, setIsWriting] = useState(false);
   const [journalContent, setJournalContent] = useState('');
   const [selectedMood, setSelectedMood] = useState('');
   const [selectedEnergy, setSelectedEnergy] = useState('');
   const [aiPrompt, setAiPrompt] = useState('');
   const [entries, setEntries] = useState<JournalEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const moods = [
     { id: 'peaceful', label: 'Peaceful', icon: 'spa', androidIcon: 'spa' },
@@ -62,23 +66,42 @@ export default function JournalScreen() {
   ];
 
   useEffect(() => {
-    console.log('JournalScreen mounted');
-    generateAIPrompt();
+    console.log('JournalScreen mounted - loading data for anonymous user');
+    loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    // Only load entries if user is authenticated
-    if (user && !authLoading) {
-      console.log('User authenticated, loading journal entries');
-      loadEntries();
+  const loadData = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // Load entries and generate prompt in parallel
+      await Promise.all([
+        loadEntries(),
+        generateAIPrompt()
+      ]);
+    } catch (err) {
+      console.error('Failed to load journal data:', err);
+      setError('Failed to load journal data');
+    } finally {
+      setLoading(false);
     }
-  }, [user, authLoading]);
+  };
 
   const loadEntries = async () => {
-    console.log('Loading journal entries');
+    console.log('Loading journal entries (anonymous mode supported)');
     try {
       const data = await journalAPI.getEntries({ limit: 20 });
-      setEntries(data || []);
+      
+      // Validate response
+      if (Array.isArray(data)) {
+        setEntries(data);
+        console.log(`✅ Loaded ${data.length} journal entries`);
+      } else {
+        console.warn('⚠️ Invalid response format, expected array');
+        setEntries([]);
+      }
     } catch (error) {
       console.error('Failed to load journal entries:', error);
       setEntries([]);
@@ -86,7 +109,7 @@ export default function JournalScreen() {
   };
 
   const generateAIPrompt = async () => {
-    console.log('Generating AI journal prompt');
+    console.log('🤖 Generating AI journal prompt (anonymous mode supported)');
     
     const fallbackPrompts = [
       'What are you noticing in your body right now?',
@@ -95,13 +118,6 @@ export default function JournalScreen() {
       'What do you need to release?',
       'How are you arriving to yourself today?',
     ];
-    
-    // Use fallback prompts if not authenticated
-    if (!user) {
-      const randomPrompt = fallbackPrompts[Math.floor(Math.random() * fallbackPrompts.length)];
-      setAiPrompt(randomPrompt);
-      return;
-    }
 
     try {
       const hour = new Date().getHours();
@@ -111,17 +127,24 @@ export default function JournalScreen() {
       else if (hour >= 18 && hour < 22) rhythmPhase = 'evening';
       else if (hour >= 22 || hour < 6) rhythmPhase = 'night';
 
-      const response = await aiAPI.generateJournalPrompt({
-        mood: selectedMood,
-        energy: selectedEnergy,
-        rhythmPhase,
+      const response = await aiAPI.generate({
+        module: 'journal',
+        goal: 'Generate a reflective journal prompt',
+        tone: selectedMood || 'calm',
+        constraints: {
+          mood: selectedMood,
+          energy: selectedEnergy,
+          rhythmPhase,
+        },
       });
       
-      if (response?.prompt) {
-        setAiPrompt(response.prompt);
+      if (response?.content) {
+        setAiPrompt(response.content);
+        console.log('✅ AI prompt generated successfully');
       } else {
         const randomPrompt = fallbackPrompts[Math.floor(Math.random() * fallbackPrompts.length)];
         setAiPrompt(randomPrompt);
+        console.log('⚠️ Using fallback prompt');
       }
     } catch (error) {
       console.error('Failed to generate AI prompt:', error);
@@ -136,17 +159,14 @@ export default function JournalScreen() {
   };
 
   const handleSaveEntry = async () => {
-    console.log('User saving journal entry:', { content: journalContent, mood: selectedMood, energy: selectedEnergy });
+    console.log('💾 User saving journal entry:', { content: journalContent, mood: selectedMood, energy: selectedEnergy });
     
     if (!journalContent.trim()) {
-      Alert.alert('Error', 'Please write something before saving');
+      showAlert('Error', 'Please write something before saving');
       return;
     }
 
-    if (!user) {
-      Alert.alert('Sign In Required', 'Please sign in to save journal entries');
-      return;
-    }
+    setSaving(true);
 
     try {
       const hour = new Date().getHours();
@@ -156,7 +176,7 @@ export default function JournalScreen() {
       else if (hour >= 18 && hour < 22) rhythmPhase = 'evening';
       else if (hour >= 22 || hour < 6) rhythmPhase = 'night';
 
-      await journalAPI.createEntry({
+      const result = await journalAPI.createEntry({
         content: journalContent,
         mood: selectedMood,
         energyLevel: selectedEnergy,
@@ -164,16 +184,23 @@ export default function JournalScreen() {
         rhythmPhase,
       });
 
-      Alert.alert('Success', 'Your journal entry has been saved');
-      setIsWriting(false);
-      setJournalContent('');
-      setSelectedMood('');
-      setSelectedEnergy('');
-      generateAIPrompt();
-      loadEntries();
+      if (result) {
+        showAlert('Success', 'Your journal entry has been saved');
+        setIsWriting(false);
+        setJournalContent('');
+        setSelectedMood('');
+        setSelectedEnergy('');
+        generateAIPrompt();
+        loadEntries();
+        console.log('✅ Journal entry saved successfully');
+      } else {
+        showAlert('Error', 'Failed to save your journal entry. Please try again.');
+      }
     } catch (error) {
-      console.error('Failed to save journal entry:', error);
-      Alert.alert('Error', 'Failed to save your journal entry. Please try again.');
+      console.error('❌ Failed to save journal entry:', error);
+      showAlert('Error', 'Failed to save your journal entry. Please try again.');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -430,8 +457,27 @@ export default function JournalScreen() {
     },
   });
 
+  // Show loading state
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <LoadingState message="Loading your journal..." />
+      </SafeAreaView>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <ErrorState message={error} onRetry={loadData} />
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
+      <AlertComponent />
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -563,9 +609,9 @@ export default function JournalScreen() {
                   style={styles.saveButton}
                   onPress={handleSaveEntry}
                   activeOpacity={0.7}
-                  disabled={!journalContent.trim()}
+                  disabled={!journalContent.trim() || saving}
                 >
-                  <Text style={styles.saveButtonText}>Save</Text>
+                  <Text style={styles.saveButtonText}>{saving ? 'Saving...' : 'Save'}</Text>
                 </TouchableOpacity>
               </View>
             </Animated.View>
@@ -582,7 +628,7 @@ export default function JournalScreen() {
                   color={colors.textSecondary}
                 />
                 <Text style={styles.emptyStateText}>
-                  {user ? 'Your journal entries will appear here' : 'Sign in to save and view journal entries'}
+                  Your journal entries will appear here. Start writing to create your first entry!
                 </Text>
               </View>
             ) : (

@@ -7,7 +7,6 @@ import {
   ScrollView,
   TouchableOpacity,
   Platform,
-  Alert,
   Image,
   ImageSourcePropType,
 } from 'react-native';
@@ -16,6 +15,7 @@ import { IconSymbol } from '@/components/IconSymbol';
 import { useAppTheme } from '@/contexts/ThemeContext';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { nutritionAPI, aiAPI } from '@/utils/api';
+import { LoadingState, ErrorState, EmptyState, useAlert } from '@/components/LoadingButton';
 
 function resolveImageSource(source: string | number | ImageSourcePropType | undefined): ImageSourcePropType {
   if (!source) return { uri: '' };
@@ -33,8 +33,11 @@ interface NutritionTask {
 
 export default function NutritionScreen() {
   const { colors } = useAppTheme();
+  const { showAlert, AlertComponent } = useAlert();
   const [tasks, setTasks] = useState<NutritionTask[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [generating, setGenerating] = useState(false);
 
   const inspirationalImages = [
     'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800&q=80',
@@ -50,78 +53,95 @@ export default function NutritionScreen() {
   }, []);
 
   const loadTodaysTasks = async () => {
-    console.log('Loading nutrition tasks');
+    console.log('🥗 Loading nutrition tasks (anonymous mode supported)');
+    setLoading(true);
+    setError(null);
+    
     try {
       const today = new Date().toISOString().split('T')[0];
       const data = await nutritionAPI.getTasks(today);
       
-      if (!data || data.length === 0) {
-        console.log('No tasks found - using empty state');
-        setTasks([]);
-      } else {
+      if (Array.isArray(data)) {
         setTasks(data);
+        console.log(`✅ Loaded ${data.length} nutrition tasks`);
+      } else {
+        console.warn('⚠️ Invalid response format, expected array');
+        setTasks([]);
       }
-    } catch (error) {
-      console.error('Failed to load nutrition tasks:', error);
+    } catch (err) {
+      console.error('❌ Failed to load nutrition tasks:', err);
+      setError('Failed to load nutrition tasks');
       setTasks([]);
-    }
-  };
-
-  const generateAITasks = async () => {
-    console.log('Generating AI nutrition tasks');
-    setLoading(true);
-    try {
-      const today = new Date().toISOString().split('T')[0];
-      const response = await aiAPI.generateNutritionTasks({
-        date: today,
-      });
-
-      if (!response) {
-        Alert.alert('Sign In Required', 'Please sign in to generate personalized nutrition tasks');
-        setLoading(false);
-        return;
-      }
-
-      if (response?.tasks && Array.isArray(response.tasks)) {
-        for (const task of response.tasks) {
-          await nutritionAPI.createTask({
-            taskDescription: task.description || task.taskDescription,
-            date: today,
-          });
-        }
-        
-        await loadTodaysTasks();
-      }
-    } catch (error) {
-      console.error('Failed to generate AI tasks:', error);
-      Alert.alert('Error', 'Failed to generate nutrition tasks. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleToggleTask = async (task: NutritionTask) => {
-    console.log('User toggled task:', task.id);
+  const generateAITasks = async () => {
+    console.log('🤖 Generating AI nutrition tasks (anonymous mode supported)');
+    setGenerating(true);
+    
     try {
-      const newCompleted = !task.completed;
+      const today = new Date().toISOString().split('T')[0];
+      const response = await aiAPI.generate({
+        module: 'nutrition',
+        goal: 'Generate 3-5 simple daily nutrition tasks',
+        tone: 'supportive',
+        constraints: { date: today },
+      });
+
+      if (response) {
+        showAlert('Success', 'New nutrition tasks generated!');
+        await loadTodaysTasks();
+        console.log('✅ Nutrition tasks generated successfully');
+      } else {
+        showAlert('Error', 'Failed to generate nutrition tasks. Please try again.');
+      }
+    } catch (err) {
+      console.error('❌ Failed to generate AI tasks:', err);
+      showAlert('Error', 'Failed to generate nutrition tasks. Please try again.');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleToggleTask = async (task: NutritionTask) => {
+    console.log('✅ User toggled task:', task.id);
+    
+    // Optimistic update
+    const newCompleted = !task.completed;
+    const completedAt = newCompleted ? new Date().toISOString() : undefined;
+    
+    setTasks(tasks.map(t => 
+      t.id === task.id 
+        ? { ...t, completed: newCompleted, completedAt }
+        : t
+    ));
+    
+    try {
       const result = await nutritionAPI.updateTask(task.id, {
         completed: newCompleted,
-        completedAt: newCompleted ? new Date().toISOString() : undefined,
+        completedAt,
       });
 
       if (!result) {
-        Alert.alert('Sign In Required', 'Please sign in to track nutrition tasks');
-        return;
+        // Revert on failure
+        setTasks(tasks.map(t => 
+          t.id === task.id 
+            ? task
+            : t
+        ));
+        showAlert('Error', 'Failed to update task. Please try again.');
       }
-
+    } catch (err) {
+      console.error('❌ Failed to update task:', err);
+      // Revert on error
       setTasks(tasks.map(t => 
         t.id === task.id 
-          ? { ...t, completed: newCompleted, completedAt: newCompleted ? new Date().toISOString() : undefined }
+          ? task
           : t
       ));
-    } catch (error) {
-      console.error('Failed to update task:', error);
-      Alert.alert('Error', 'Failed to update task. Please try again.');
+      showAlert('Error', 'Failed to update task. Please try again.');
     }
   };
 
@@ -243,8 +263,27 @@ export default function NutritionScreen() {
     },
   });
 
+  // Show loading state
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <LoadingState message="Loading nutrition tasks..." />
+      </SafeAreaView>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <ErrorState message={error} onRetry={loadTodaysTasks} />
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
+      <AlertComponent />
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.scrollContent}
@@ -318,10 +357,10 @@ export default function NutritionScreen() {
           style={styles.generateButton}
           onPress={generateAITasks}
           activeOpacity={0.7}
-          disabled={loading}
+          disabled={generating}
         >
           <Text style={styles.generateButtonText}>
-            {loading ? 'Generating...' : 'Generate New Tasks'}
+            {generating ? 'Generating...' : 'Generate New Tasks'}
           </Text>
         </TouchableOpacity>
       </ScrollView>

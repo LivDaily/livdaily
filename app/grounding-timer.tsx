@@ -6,7 +6,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   Platform,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
@@ -14,11 +13,13 @@ import { IconSymbol } from '@/components/IconSymbol';
 import { useAppTheme } from '@/contexts/ThemeContext';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { groundingAPI } from '@/utils/api';
+import { useAlert } from '@/components/LoadingButton';
 
 export default function GroundingTimerScreen() {
   const { colors } = useAppTheme();
   const router = useRouter();
   const params = useLocalSearchParams();
+  const { showAlert, AlertComponent } = useAlert();
   
   const sessionType = (params.type as string) || 'breathwork';
   const initialDuration = parseInt((params.duration as string) || '5', 10);
@@ -35,7 +36,37 @@ export default function GroundingTimerScreen() {
         clearInterval(intervalRef.current);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const handleComplete = async () => {
+    console.log('Grounding timer completed');
+    setIsRunning(false);
+    setIsPaused(false);
+
+    try {
+      await groundingAPI.createSession({
+        sessionType,
+        durationMinutes: initialDuration,
+      });
+      
+      showAlert(
+        'Session Complete',
+        `Well done! You completed your ${initialDuration}-minute ${sessionType} session.`,
+        [
+          {
+            text: 'Done',
+            onPress: () => router.back(),
+          },
+        ]
+      );
+    } catch (error) {
+      console.error('Failed to save grounding session:', error);
+      showAlert('Session Complete', 'Well done!', [
+        { text: 'Done', onPress: () => router.back() },
+      ]);
+    }
+  };
 
   useEffect(() => {
     if (isRunning && !isPaused) {
@@ -60,6 +91,7 @@ export default function GroundingTimerScreen() {
         clearInterval(intervalRef.current);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRunning, isPaused]);
 
   const handleStart = () => {
@@ -80,7 +112,7 @@ export default function GroundingTimerScreen() {
 
   const handleStop = () => {
     console.log('User stopped grounding timer');
-    Alert.alert(
+    showAlert(
       'End Session',
       'Are you sure you want to end this session?',
       [
@@ -96,35 +128,6 @@ export default function GroundingTimerScreen() {
         },
       ]
     );
-  };
-
-  const handleComplete = async () => {
-    console.log('Grounding timer completed');
-    setIsRunning(false);
-    setIsPaused(false);
-
-    try {
-      await groundingAPI.createSession({
-        sessionType,
-        durationMinutes: initialDuration,
-      });
-      
-      Alert.alert(
-        'Session Complete',
-        `Well done! You completed your ${initialDuration}-minute ${sessionType} session.`,
-        [
-          {
-            text: 'Done',
-            onPress: () => router.back(),
-          },
-        ]
-      );
-    } catch (error) {
-      console.error('Failed to save grounding session:', error);
-      Alert.alert('Session Complete', 'Well done!', [
-        { text: 'Done', onPress: () => router.back() },
-      ]);
-    }
   };
 
   const formatTime = (seconds: number) => {
@@ -238,6 +241,7 @@ export default function GroundingTimerScreen() {
         }}
       />
       <SafeAreaView style={styles.container} edges={['bottom']}>
+        <AlertComponent />
         <View style={styles.content}>
           <Animated.Text entering={FadeIn.duration(600)} style={styles.sessionType}>
             {sessionTypeLabel}

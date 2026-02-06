@@ -1,7 +1,7 @@
 
 import { SafeAreaView } from "react-native-safe-area-context";
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
 import { IconSymbol } from "@/components/IconSymbol";
 import { useAppTheme } from "@/contexts/ThemeContext";
 import { ThemeName, themes } from "@/styles/commonStyles";
@@ -9,11 +9,13 @@ import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { useAuth } from "@/contexts/AuthContext";
 import { userAPI } from "@/utils/api";
 import { Stack, useRouter } from "expo-router";
+import { useAlert } from "@/components/LoadingButton";
 
 export default function ProfileScreen() {
   const { colors, themeName, setTheme } = useAppTheme();
   const { user, loading: authLoading, signOut } = useAuth();
   const router = useRouter();
+  const { showAlert, AlertComponent } = useAlert();
   const [showThemeSelector, setShowThemeSelector] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [profileLoading, setProfileLoading] = useState(true);
@@ -24,6 +26,7 @@ export default function ProfileScreen() {
     } else {
       setProfileLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, authLoading]);
 
   const loadUserProfile = async () => {
@@ -74,7 +77,7 @@ export default function ProfileScreen() {
   };
 
   const handleSignOut = async () => {
-    Alert.alert(
+    showAlert(
       'Sign Out',
       'Are you sure you want to sign out?',
       [
@@ -89,7 +92,7 @@ export default function ProfileScreen() {
               console.log('Sign out successful');
             } catch (error) {
               console.error('Failed to sign out:', error);
-              Alert.alert('Error', 'Failed to sign out. Please try again.');
+              showAlert('Error', 'Failed to sign out. Please try again.');
             }
           },
         },
@@ -99,55 +102,49 @@ export default function ProfileScreen() {
 
   const handleAccessibilityPress = () => {
     console.log('User tapped Accessibility Features');
-    Alert.alert(
+    showAlert(
       'Accessibility Features',
-      'Customize your experience:\n\n• Adjustable font sizes\n• Screen reader compatibility\n• High contrast mode\n• Reduced motion options\n• Voice control support\n\nThese features help make LivDaily accessible to everyone.',
-      [{ text: 'Close', style: 'cancel' }]
+      'Customize your experience:\n\n• Adjustable font sizes\n• Screen reader compatibility\n• High contrast mode\n• Reduced motion options\n• Voice control support\n\nThese features help make LivDaily accessible to everyone.'
     );
   };
 
   const handleNotificationsPress = () => {
     console.log('User tapped Presence Notifications');
-    Alert.alert(
+    showAlert(
       'Presence Notifications',
-      'Gentle reminders throughout your day:\n\n• Morning arrival prompts\n• Midday grounding check-ins\n• Evening wind-down reminders\n• Personalized timing based on your patterns\n\nNotifications adapt to your rhythm and can be customized or turned off anytime.',
-      [{ text: 'Close', style: 'cancel' }]
+      'Gentle reminders throughout your day:\n\n• Morning arrival prompts\n• Midday grounding check-ins\n• Evening wind-down reminders\n• Personalized timing based on your patterns\n\nNotifications adapt to your rhythm and can be customized or turned off anytime.'
     );
   };
 
   const handleTrackingPress = () => {
     console.log('User tapped Tracking Preferences');
-    Alert.alert(
+    showAlert(
       'Tracking Preferences',
-      'Optional wellness tracking:\n\n• Movement and activity logs\n• Nutrition task completion\n• Sleep quality tracking\n• Journaling patterns\n• Grounding session history\n\nAll tracking is optional and can be turned on or off at any time. Your data is private and secure.',
-      [{ text: 'Close', style: 'cancel' }]
+      'Optional wellness tracking:\n\n• Movement and activity logs\n• Nutrition task completion\n• Sleep quality tracking\n• Journaling patterns\n• Grounding session history\n\nAll tracking is optional and can be turned on or off at any time. Your data is private and secure.'
     );
   };
 
   const handlePrivacyPress = () => {
     console.log('User tapped Privacy Settings');
-    Alert.alert(
+    showAlert(
       'Privacy Settings',
-      'Your data, your control:\n\n• View what data is collected\n• Manage app permissions\n• Export your data\n• Delete your account\n• Control data sharing\n\nLivDaily is designed with privacy first. Your wellness journey is yours alone.',
-      [{ text: 'Close', style: 'cancel' }]
+      'Your data, your control:\n\n• View what data is collected\n• Manage app permissions\n• Export your data\n• Delete your account\n• Control data sharing\n\nLivDaily is designed with privacy first. Your wellness journey is yours alone.'
     );
   };
 
   const handleSupportPress = () => {
     console.log('User tapped Support & Help');
-    Alert.alert(
+    showAlert(
       'Support & Help',
-      'We are here for you:\n\n• Frequently asked questions\n• Contact support team\n• Report technical issues\n• Share feedback\n• Request features\n\nYour experience matters. Reach out anytime you need assistance.',
-      [{ text: 'Close', style: 'cancel' }]
+      'We are here for you:\n\n• Frequently asked questions\n• Contact support team\n• Report technical issues\n• Share feedback\n• Request features\n\nYour experience matters. Reach out anytime you need assistance.'
     );
   };
 
   const handleAboutPress = () => {
     console.log('User tapped About LivDaily');
-    Alert.alert(
+    showAlert(
       'About LivDaily',
-      'Version 1.0.0\n\nLivDaily is your 24-hour rhythm companion, designed to support your wellness journey with warmth, presence, and care.\n\nCreated with intention to help you arrive, breathe, and find your rhythm throughout each day.\n\n© 2026 LivDaily',
-      [{ text: 'Close', style: 'cancel' }]
+      'Version 1.0.0\n\nLivDaily is your 24-hour rhythm companion, designed to support your wellness journey with warmth, presence, and care.\n\nCreated with intention to help you arrive, breathe, and find your rhythm throughout each day.\n\n© 2026 LivDaily'
     );
   };
 
@@ -300,6 +297,7 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
+      <AlertComponent />
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.scrollContent}

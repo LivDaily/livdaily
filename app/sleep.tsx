@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
   TextInput,
   Platform,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useRouter } from 'expo-router';
@@ -16,6 +15,7 @@ import { IconSymbol } from '@/components/IconSymbol';
 import { useAppTheme } from '@/contexts/ThemeContext';
 import { sleepAPI } from '@/utils/api';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
+import { useAlert } from '@/components/LoadingButton';
 
 interface SleepLog {
   id: string;
@@ -40,6 +40,7 @@ interface SleepStats {
 export default function SleepScreen() {
   const { colors } = useAppTheme();
   const router = useRouter();
+  const { showAlert, AlertComponent } = useAlert();
   const [logs, setLogs] = useState<SleepLog[]>([]);
   const [stats, setStats] = useState<SleepStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -89,7 +90,7 @@ export default function SleepScreen() {
       });
       
       if (!result) {
-        Alert.alert('Sign In Required', 'Please sign in to log sleep data');
+        showAlert('Sign In Required', 'Please sign in to log sleep data');
         return;
       }
       
@@ -98,10 +99,10 @@ export default function SleepScreen() {
       setReflection('');
       setShowAddForm(false);
       loadData();
-      Alert.alert('Success', 'Sleep logged successfully!');
+      showAlert('Success', 'Sleep logged successfully!');
     } catch (error) {
       console.error('Failed to create sleep log:', error);
-      Alert.alert('Error', 'Failed to log sleep');
+      showAlert('Error', 'Failed to log sleep');
     }
   };
 
@@ -355,6 +356,7 @@ export default function SleepScreen() {
         }}
       />
       <SafeAreaView style={styles.container} edges={['bottom']}>
+        <AlertComponent />
         <ScrollView
           style={styles.container}
           contentContainerStyle={styles.scrollContent}

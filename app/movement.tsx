@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
   TextInput,
   Platform,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useRouter } from 'expo-router';
@@ -16,6 +15,7 @@ import { IconSymbol } from '@/components/IconSymbol';
 import { useAppTheme } from '@/contexts/ThemeContext';
 import { movementAPI } from '@/utils/api';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
+import { useAlert } from '@/components/LoadingButton';
 
 interface MovementLog {
   id: string;
@@ -28,13 +28,14 @@ interface MovementLog {
 interface MovementStats {
   totalMinutes: number;
   sessionsCount: number;
-  favoriteActivities: Array<{ activity: string; count: number }>;
+  favoriteActivities: { activity: string; count: number }[];
   period: string;
 }
 
 export default function MovementScreen() {
   const { colors } = useAppTheme();
   const router = useRouter();
+  const { showAlert, AlertComponent } = useAlert();
   const [logs, setLogs] = useState<MovementLog[]>([]);
   const [stats, setStats] = useState<MovementStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -46,6 +47,7 @@ export default function MovementScreen() {
   useEffect(() => {
     console.log('MovementScreen mounted');
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadData = async () => {
@@ -70,13 +72,13 @@ export default function MovementScreen() {
 
   const handleAddLog = async () => {
     if (!activityType.trim() || !duration.trim()) {
-      Alert.alert('Error', 'Please fill in activity type and duration');
+      showAlert('Error', 'Please fill in activity type and duration');
       return;
     }
 
     const durationNum = parseInt(duration);
     if (isNaN(durationNum) || durationNum <= 0) {
-      Alert.alert('Error', 'Please enter a valid duration in minutes');
+      showAlert('Error', 'Please enter a valid duration in minutes');
       return;
     }
 
@@ -89,7 +91,7 @@ export default function MovementScreen() {
       });
       
       if (!result) {
-        Alert.alert('Sign In Required', 'Please sign in to log movement activities');
+        showAlert('Sign In Required', 'Please sign in to log movement activities');
         return;
       }
       
@@ -98,10 +100,10 @@ export default function MovementScreen() {
       setNotes('');
       setShowAddForm(false);
       loadData();
-      Alert.alert('Success', 'Movement logged successfully!');
+      showAlert('Success', 'Movement logged successfully!');
     } catch (error) {
       console.error('Failed to create movement log:', error);
-      Alert.alert('Error', 'Failed to log movement');
+      showAlert('Error', 'Failed to log movement');
     }
   };
 
@@ -316,6 +318,7 @@ export default function MovementScreen() {
         }}
       />
       <SafeAreaView style={styles.container} edges={['bottom']}>
+        <AlertComponent />
         <ScrollView
           style={styles.container}
           contentContainerStyle={styles.scrollContent}

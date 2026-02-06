@@ -1,68 +1,211 @@
 
 import Constants from "expo-constants";
+import * as SecureStore from "expo-secure-store";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Platform } from "react-native";
 import { authClient } from "@/lib/auth";
 
 export const BACKEND_URL = Constants.expoConfig?.extra?.backendUrl || "http://localhost:3000";
 
 console.log("🔗 Backend URL configured:", BACKEND_URL);
 
+const ANONYMOUS_TOKEN_KEY = "livdaily_anonymous_token";
+const ANONYMOUS_USER_ID_KEY = "livdaily_anonymous_user_id";
+
+let anonymousToken: string | null = null;
+let anonymousUserId: string | null = null;
+
 /**
- * Helper function to make authenticated API calls
- * Uses Better Auth's built-in fetch which automatically handles authentication
+ * Get or create an anonymous session token
+ * This is called automatically when making API calls
+ */
+async function getOrCreateAnonymousToken(): Promise<string | null> {
+  console.log("🔑 Getting or creating anonymous token...");
+  
+  // Check memory cache first
+  if (anonymousToken) {
+    console.log("✅ Using cached anonymous token");
+    return anonymousToken;
+  }
+
+  // Try to retrieve from storage
+  try {
+    if (Platform.OS === "web") {
+      anonymousToken = await AsyncStorage.getItem(ANONYMOUS_TOKEN_KEY);
+      anonymousUserId = await AsyncStorage.getItem(ANONYMOUS_USER_ID_KEY);
+    } else {
+      anonymousToken = await SecureStore.getItemAsync(ANONYMOUS_TOKEN_KEY);
+      anonymousUserId = await SecureStore.getItemAsync(ANONYMOUS_USER_ID_KEY);
+    }
+
+    if (anonymousToken) {
+      console.log("✅ Retrieved anonymous token from storage");
+      return anonymousToken;
+    }
+  } catch (error) {
+    console.error("⚠️ Error retrieving token from storage:", error);
+  }
+
+  // If no token, create a new anonymous session
+  try {
+    console.log("🆕 Creating new anonymous session...");
+    const response = await fetch(`${BACKEND_URL}/v1/auth/anonymous`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => "Unknown error");
+      console.error("❌ Failed to create anonymous session:", response.status, errorText);
+      return null;
+    }
+
+    const data = await response.json();
+    anonymousToken = data.token;
+    anonymousUserId = data.userId;
+
+    // Store the new token
+    if (Platform.OS === "web") {
+      await AsyncStorage.setItem(ANONYMOUS_TOKEN_KEY, anonymousToken);
+      await AsyncStorage.setItem(ANONYMOUS_USER_ID_KEY, anonymousUserId);
+    } else {
+      await SecureStore.setItemAsync(ANONYMOUS_TOKEN_KEY, anonymousToken);
+      await SecureStore.setItemAsync(ANONYMOUS_USER_ID_KEY, anonymousUserId);
+    }
+
+    console.log("✅ Anonymous session created successfully");
+    return anonymousToken;
+  } catch (error) {
+    console.error("❌ Error creating anonymous session:", error);
+    return null;
+  }
+}
+
+/**
+ * Clear anonymous session (for testing or logout)
+ */
+export async function clearAnonymousSession() {
+  console.log("🗑️ Clearing anonymous session...");
+  anonymousToken = null;
+  anonymousUserId = null;
+
+  try {
+    if (Platform.OS === "web") {
+      await AsyncStorage.removeItem(ANONYMOUS_TOKEN_KEY);
+      await AsyncStorage.removeItem(ANONYMOUS_USER_ID_KEY);
+    } else {
+      await SecureStore.deleteItemAsync(ANONYMOUS_TOKEN_KEY);
+      await SecureStore.deleteItemAsync(ANONYMOUS_USER_ID_KEY);
+    }
+    console.log("✅ Anonymous session cleared");
+  } catch (error) {
+    console.error("⚠️ Error clearing session:", error);
+  }
+}
+
+/**
+ * Helper function to make API calls with automatic anonymous authentication
  */
 export async function apiCall<T = any>(
   endpoint: string,
   options: RequestInit = {}
-): Promise<T> {
+): Promise<T | null> {
   try {
     const url = `${BACKEND_URL}${endpoint}`;
     console.log(`🌐 API Call: ${options.method || "GET"} ${url}`);
 
-    // Use Better Auth's fetch method which automatically includes auth headers
-    const response = await authClient.$fetch(url, {
+    // Get or create anonymous token
+    const token = await getOrCreateAnonymousToken();
+    if (!token) {
+      console.error("❌ No anonymous token available");
+      return null;
+    }
+
+    // Make the request with the token
+    const response = await fetch(url, {
       ...options,
       headers: {
         "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
         ...options.headers,
       },
     });
 
-    console.log(`✅ API Success: ${options.method || "GET"} ${url}`);
-    return response as T;
-  } catch (error: any) {
-    console.error(`❌ API Call Failed: ${endpoint}`, error);
-    
-    // Better Auth throws errors with response property
-    if (error.response) {
-      const status = error.response.status;
-      const errorText = await error.response.text().catch(() => "Unknown error");
-      console.error(`❌ API Error: ${status}`, errorText);
+    // Handle 401 - token might be expired, try to refresh once
+    if (response.status === 401) {
+      console.warn("⚠️ 401 Unauthorized - attempting to refresh token...");
       
-      // For 401 errors, return null instead of throwing
-      // This allows components to handle unauthenticated state gracefully
-      if (status === 401) {
-        console.log(`⚠️ Unauthenticated request to ${endpoint} - returning null`);
-        return null as T;
+      // Clear old token and try to create a new one
+      await clearAnonymousSession();
+      const newToken = await getOrCreateAnonymousToken();
+      
+      if (newToken) {
+        console.log("🔄 Retrying request with new token...");
+        const retryResponse = await fetch(url, {
+          ...options,
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${newToken}`,
+            ...options.headers,
+          },
+        });
+
+        if (retryResponse.ok) {
+          const data = await retryResponse.json();
+          console.log(`✅ API Success (after retry): ${options.method || "GET"} ${url}`);
+          return data as T;
+        }
       }
       
-      throw new Error(`API Error: ${status} - ${errorText}`);
+      console.error("❌ Failed to authenticate after retry");
+      return null;
     }
-    
-    throw error;
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => "Unknown error");
+      console.error(`❌ API Error: ${response.status}`, errorText);
+      return null;
+    }
+
+    const data = await response.json();
+    console.log(`✅ API Success: ${options.method || "GET"} ${url}`);
+    return data as T;
+  } catch (error: any) {
+    console.error(`❌ API Call Failed: ${endpoint}`, error);
+    return null;
   }
 }
 
 // AI Content Generation APIs
 export const aiAPI = {
+  // Unified AI generation endpoint
+  generate: async (params: {
+    module: string;
+    goal: string;
+    timeAvailable?: number;
+    tone?: string;
+    constraints?: any;
+  }) => {
+    console.log("🤖 Generating AI content for module:", params.module);
+    return apiCall("/v1/ai/generate", {
+      method: "POST",
+      body: JSON.stringify(params),
+    });
+  },
+
+  // Legacy endpoints for backward compatibility
   generateJournalPrompt: async (params: {
     mood?: string;
     energy?: string;
     rhythmPhase?: string;
     userPatterns?: any;
   }) => {
-    return apiCall("/api/ai/journal-prompt", {
-      method: "POST",
-      body: JSON.stringify(params),
+    return aiAPI.generate({
+      module: "journal",
+      goal: "Generate a reflective journal prompt",
+      tone: params.mood || "calm",
+      constraints: params,
     });
   },
 
@@ -71,9 +214,10 @@ export const aiAPI = {
     userPatterns?: any;
     preferences?: any;
   }) => {
-    return apiCall("/api/ai/nutrition-tasks", {
-      method: "POST",
-      body: JSON.stringify(params),
+    return aiAPI.generate({
+      module: "nutrition",
+      goal: "Generate simple daily nutrition tasks",
+      constraints: params,
     });
   },
 
@@ -82,9 +226,12 @@ export const aiAPI = {
     timeAvailable?: number;
     preferences?: any;
   }) => {
-    return apiCall("/api/ai/movement-suggestions", {
-      method: "POST",
-      body: JSON.stringify(params),
+    return aiAPI.generate({
+      module: "movement",
+      goal: "Generate movement suggestions",
+      timeAvailable: params.timeAvailable,
+      tone: params.energy,
+      constraints: params,
     });
   },
 
@@ -92,9 +239,11 @@ export const aiAPI = {
     currentState?: string;
     userPatterns?: any;
   }) => {
-    return apiCall("/api/ai/sleep-content", {
-      method: "POST",
-      body: JSON.stringify(params),
+    return aiAPI.generate({
+      module: "sleep",
+      goal: "Generate sleep content",
+      tone: params.currentState || "calm",
+      constraints: params,
     });
   },
 
@@ -102,9 +251,10 @@ export const aiAPI = {
     userPatterns?: any;
     weekTheme?: string;
   }) => {
-    return apiCall("/api/ai/weekly-motivation", {
-      method: "POST",
-      body: JSON.stringify(params),
+    return aiAPI.generate({
+      module: "motivation",
+      goal: "Generate weekly motivation",
+      constraints: params,
     });
   },
 };
@@ -179,7 +329,7 @@ export const journalAPI = {
     limit?: number;
   }) => {
     const query = new URLSearchParams(params as any).toString();
-    return apiCall(`/api/journal${query ? `?${query}` : ""}`);
+    return apiCall(`/v1/journal${query ? `?${query}` : ""}`);
   },
 
   createEntry: async (data: {
@@ -189,14 +339,14 @@ export const journalAPI = {
     promptUsed?: string;
     rhythmPhase?: string;
   }) => {
-    return apiCall("/api/journal", {
+    return apiCall("/v1/journal", {
       method: "POST",
       body: JSON.stringify(data),
     });
   },
 
   deleteEntry: async (id: string) => {
-    return apiCall(`/api/journal/${id}`, {
+    return apiCall(`/v1/journal/${id}`, {
       method: "DELETE",
     });
   },
@@ -206,7 +356,7 @@ export const journalAPI = {
 export const movementAPI = {
   getLogs: async (params?: { startDate?: string; endDate?: string }) => {
     const query = new URLSearchParams(params as any).toString();
-    return apiCall(`/api/movement${query ? `?${query}` : ""}`);
+    return apiCall(`/v1/movement${query ? `?${query}` : ""}`);
   },
 
   createLog: async (data: {
@@ -215,32 +365,32 @@ export const movementAPI = {
     videoId?: string;
     notes?: string;
   }) => {
-    return apiCall("/api/movement", {
+    return apiCall("/v1/movement", {
       method: "POST",
       body: JSON.stringify(data),
     });
   },
 
   getStats: async (period: "week" | "month") => {
-    return apiCall(`/api/movement/stats?period=${period}`);
+    return apiCall(`/v1/movement/stats?period=${period}`);
   },
 };
 
 // Nutrition APIs
 export const nutritionAPI = {
   getTasks: async (date: string) => {
-    return apiCall(`/api/nutrition/tasks?date=${date}`);
+    return apiCall(`/v1/nutrition/tasks?date=${date}`);
   },
 
   createTask: async (data: { taskDescription: string; date: string }) => {
-    return apiCall("/api/nutrition/tasks", {
+    return apiCall("/v1/nutrition/tasks", {
       method: "POST",
       body: JSON.stringify(data),
     });
   },
 
   updateTask: async (id: string, data: { completed: boolean; completedAt?: string }) => {
-    return apiCall(`/api/nutrition/tasks/${id}`, {
+    return apiCall(`/v1/nutrition/tasks/${id}`, {
       method: "PUT",
       body: JSON.stringify(data),
     });
@@ -251,7 +401,7 @@ export const nutritionAPI = {
 export const sleepAPI = {
   getLogs: async (params?: { startDate?: string; endDate?: string }) => {
     const query = new URLSearchParams(params as any).toString();
-    return apiCall(`/api/sleep${query ? `?${query}` : ""}`);
+    return apiCall(`/v1/sleep${query ? `?${query}` : ""}`);
   },
 
   createLog: async (data: {
@@ -262,14 +412,14 @@ export const sleepAPI = {
     reflection?: string;
     date: string;
   }) => {
-    return apiCall("/api/sleep", {
+    return apiCall("/v1/sleep", {
       method: "POST",
       body: JSON.stringify(data),
     });
   },
 
   getStats: async (period: "week" | "month") => {
-    return apiCall(`/api/sleep/stats?period=${period}`);
+    return apiCall(`/v1/sleep/stats?period=${period}`);
   },
 };
 
@@ -277,7 +427,7 @@ export const sleepAPI = {
 export const groundingAPI = {
   getSessions: async (params?: { startDate?: string; endDate?: string }) => {
     const query = new URLSearchParams(params as any).toString();
-    return apiCall(`/api/grounding${query ? `?${query}` : ""}`);
+    return apiCall(`/v1/grounding${query ? `?${query}` : ""}`);
   },
 
   createSession: async (data: {
@@ -285,7 +435,7 @@ export const groundingAPI = {
     durationMinutes: number;
     notes?: string;
   }) => {
-    return apiCall("/api/grounding", {
+    return apiCall("/v1/grounding", {
       method: "POST",
       body: JSON.stringify(data),
     });
@@ -295,11 +445,11 @@ export const groundingAPI = {
 // Mindfulness APIs
 export const mindfulnessAPI = {
   getContent: async () => {
-    return apiCall("/api/mindfulness/content");
+    return apiCall("/v1/mindfulness/content");
   },
 
   getContentById: async (id: string) => {
-    return apiCall(`/api/mindfulness/content/${id}`);
+    return apiCall(`/v1/mindfulness/content/${id}`);
   },
 
   createJournalEntry: async (data: {
@@ -307,18 +457,19 @@ export const mindfulnessAPI = {
     content: string;
     mood?: string;
   }) => {
-    return apiCall("/api/mindfulness/journal", {
+    return apiCall("/v1/mindfulness/journal", {
       method: "POST",
       body: JSON.stringify(data),
     });
   },
 
   getJournalEntries: async () => {
-    return apiCall("/api/mindfulness/journal");
+    return apiCall("/v1/mindfulness/journal");
   },
 
   getSubscription: async () => {
-    return apiCall("/api/mindfulness/subscription");
+    // Return free subscription for anonymous users
+    return { subscriptionType: 'free', status: 'active' };
   },
 };
 
@@ -357,11 +508,11 @@ export const mediaAPI = {
 // Motivation APIs
 export const motivationAPI = {
   getCurrent: async () => {
-    return apiCall("/api/motivation/current");
+    return apiCall("/v1/motivation/current");
   },
 
   getHistory: async () => {
-    return apiCall("/api/motivation/history");
+    return apiCall("/v1/motivation/history");
   },
 };
 
