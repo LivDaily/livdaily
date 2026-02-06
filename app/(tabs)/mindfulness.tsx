@@ -1,8 +1,5 @@
 
-import { IconSymbol } from '@/components/IconSymbol';
-import { useAppTheme } from '@/contexts/ThemeContext';
-import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,20 +8,22 @@ import {
   TouchableOpacity,
   Platform,
 } from 'react-native';
-import React, { useState, useEffect } from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
-import { mindfulnessAPI, aiAPI, premiumAPI } from '@/utils/api';
+import { IconSymbol } from '@/components/IconSymbol';
+import { useAppTheme } from '@/contexts/ThemeContext';
+import { mindfulnessAPI, premiumAPI } from '@/utils/api';
 import { LoadingState, ErrorState, EmptyState, useAlert } from '@/components/LoadingButton';
 
 interface MindfulnessContent {
   id: string;
   title: string;
   content: string;
-  contentType: string;
   category: string;
   duration?: number;
-  aiGenerated: boolean;
-  isActive: boolean;
+  isAiGenerated?: boolean;
+  createdAt: string;
 }
 
 interface Subscription {
@@ -91,21 +90,39 @@ export default function MindfulnessScreen() {
   };
 
   const handleGenerateContent = async () => {
-    console.log('🤖 Generating AI mindfulness content');
+    console.log('🤖 User tapped Generate Content button - starting AI generation');
     setGenerating(true);
+    setError(null);
 
     try {
+      // Call AI generation API
+      console.log('📡 Calling AI generation endpoint...');
       const result = await mindfulnessAPI.generateNew();
 
-      if (result) {
-        showAlert('Success', 'New mindfulness content generated!');
-        await loadData(); // Reload to show new content
+      if (result && result.id) {
+        console.log('✅ AI content generated successfully:', result.title);
+        console.log('📊 Content details:', {
+          id: result.id,
+          title: result.title,
+          category: result.category,
+          duration: result.duration,
+          aiGenerated: result.aiGenerated,
+        });
+        
+        showAlert('Success', `New mindfulness content generated: "${result.title}"`);
+        
+        // Refresh the list to show new content
+        console.log('🔄 Refreshing content list...');
+        await loadData();
       } else {
+        console.error('⚠️ AI generation returned invalid response:', result);
         showAlert('Error', 'Failed to generate content. Please try again.');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('❌ Failed to generate mindfulness content:', err);
-      showAlert('Error', 'Failed to generate content. Please try again.');
+      const errorMessage = err?.message || 'Failed to generate content. Please try again.';
+      showAlert('Error', errorMessage);
+      setError(errorMessage);
     } finally {
       setGenerating(false);
     }
@@ -114,18 +131,24 @@ export default function MindfulnessScreen() {
   const handleContentPress = (item: MindfulnessContent) => {
     console.log('User tapped mindfulness content:', item.title);
     
-    const durationText = item.duration ? `${item.duration} minutes` : '';
-    const categoryText = item.category.charAt(0).toUpperCase() + item.category.slice(1);
+    // Atomic JSX: Calculate all display values before using them
+    const titleText = item.title || 'Untitled';
+    const durationText = item.duration ? `${item.duration} minutes` : 'Duration not specified';
+    const categoryRaw = item.category || 'mindfulness';
+    const categoryText = categoryRaw.charAt(0).toUpperCase() + categoryRaw.slice(1);
+    const contentText = item.content || 'No content available';
+    const headerText = `${categoryText} • ${durationText}`;
+    const fullMessage = `${headerText}\n\n${contentText}`;
     
     showAlert(
-      item.title,
-      `${categoryText} • ${durationText}\n\n${item.content}`,
+      titleText,
+      fullMessage,
       [
         { text: 'Close', style: 'cancel' },
         {
           text: 'Begin Practice',
           onPress: () => {
-            console.log('User starting mindfulness practice:', item.title);
+            console.log('User starting mindfulness practice:', titleText);
             showAlert('Practice Started', 'Find a comfortable position and begin when ready.');
           },
         },
@@ -297,6 +320,8 @@ export default function MindfulnessScreen() {
   }
 
   const contentList = Array.isArray(content) ? content : [];
+  const generateButtonText = generating ? 'Generating...' : '+ New';
+  const emptyCtaText = generating ? 'Generating...' : 'Generate Content';
 
   return (
       <SafeAreaView style={styles.container} edges={['top']}>
@@ -324,11 +349,12 @@ export default function MindfulnessScreen() {
                 paddingHorizontal: 16,
                 paddingVertical: 8,
                 borderRadius: 12,
+                opacity: generating ? 0.6 : 1,
               }}
               activeOpacity={0.7}
             >
               <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: '600' }}>
-                {generating ? 'Generating...' : '+ New'}
+                {generateButtonText}
               </Text>
             </TouchableOpacity>
           </View>
@@ -337,13 +363,21 @@ export default function MindfulnessScreen() {
             <View style={styles.emptyContainer}>
               <EmptyState
                 message="No mindfulness content available yet"
-                ctaText={generating ? "Generating..." : "Generate Content"}
+                ctaText={emptyCtaText}
                 onCtaPress={generating ? undefined : handleGenerateContent}
               />
             </View>
           ) : (
             contentList.map((item, index) => {
+              // Atomic JSX: Calculate all display values before JSX
               const durationText = item.duration ? `${item.duration} min` : '';
+              const hasDuration = Boolean(item.duration);
+              const categoryText = item.category || 'Mindfulness';
+              const isAiGenerated = item.isAiGenerated === true;
+              const aiGeneratedText = 'AI Generated';
+              const contentPreview = item.content || '';
+              const titleText = item.title || 'Untitled';
+              const accessibilityText = `${titleText}, ${item.duration || 0} minutes`;
               
               return (
                 <React.Fragment key={item.id}>
@@ -354,27 +388,27 @@ export default function MindfulnessScreen() {
                       activeOpacity={0.7}
                       accessible={true}
                       accessibilityRole="button"
-                      accessibilityLabel={`${item.title}, ${item.duration} minutes`}
+                      accessibilityLabel={accessibilityText}
                       accessibilityHint="Tap to view content details and begin practice"
                     >
                       <View style={styles.contentHeader}>
-                        <Text style={styles.contentTitle}>{item.title}</Text>
-                        {item.duration && (
+                        <Text style={styles.contentTitle}>{titleText}</Text>
+                        {hasDuration && (
                           <View style={styles.durationBadge}>
                             <Text style={styles.durationText}>{durationText}</Text>
                           </View>
                         )}
                       </View>
                       <Text style={styles.contentDescription} numberOfLines={2}>
-                        {item.content}
+                        {contentPreview}
                       </Text>
                       <View style={styles.contentFooter}>
                         <View style={styles.categoryBadge}>
-                          <Text style={styles.categoryText}>{item.category}</Text>
+                          <Text style={styles.categoryText}>{categoryText}</Text>
                         </View>
-                        {item.aiGenerated && (
+                        {isAiGenerated && (
                           <View style={styles.categoryBadge}>
-                            <Text style={styles.categoryText}>AI Generated</Text>
+                            <Text style={styles.categoryText}>{aiGeneratedText}</Text>
                           </View>
                         )}
                       </View>
@@ -389,34 +423,41 @@ export default function MindfulnessScreen() {
         {premiumFeatures.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Premium Features</Text>
-            {premiumFeatures.map((feature, index) => (
-              <Animated.View
-                key={feature.id}
-                entering={FadeInDown.delay(800 + index * 100).duration(600)}
-              >
-                <TouchableOpacity
-                  style={styles.contentCard}
-                  onPress={() => {
-                    showAlert(
-                      feature.featureName || 'Premium Feature',
-                      feature.content?.description || 'Unlock this premium feature to access advanced mindfulness practices.',
-                      [{ text: 'OK' }]
-                    );
-                  }}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.contentHeader}>
-                    <Text style={styles.contentTitle}>{feature.featureName || 'Premium Feature'}</Text>
-                    <View style={styles.durationBadge}>
-                      <Text style={styles.durationText}>Premium</Text>
-                    </View>
-                  </View>
-                  <Text style={styles.contentDescription} numberOfLines={2}>
-                    {feature.content?.description || 'Advanced mindfulness practice'}
-                  </Text>
-                </TouchableOpacity>
-              </Animated.View>
-            ))}
+            {premiumFeatures.map((feature, index) => {
+              const featureName = feature.featureName || 'Premium Feature';
+              const featureDescription = feature.content?.description || 'Unlock this premium feature to access advanced mindfulness practices.';
+              const premiumBadgeText = 'Premium';
+              
+              return (
+                <React.Fragment key={feature.id}>
+                  <Animated.View
+                    entering={FadeInDown.delay(800 + index * 100).duration(600)}
+                  >
+                    <TouchableOpacity
+                      style={styles.contentCard}
+                      onPress={() => {
+                        showAlert(
+                          featureName,
+                          featureDescription,
+                          [{ text: 'OK' }]
+                        );
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <View style={styles.contentHeader}>
+                        <Text style={styles.contentTitle}>{featureName}</Text>
+                        <View style={styles.durationBadge}>
+                          <Text style={styles.durationText}>{premiumBadgeText}</Text>
+                        </View>
+                      </View>
+                      <Text style={styles.contentDescription} numberOfLines={2}>
+                        {featureDescription}
+                      </Text>
+                    </TouchableOpacity>
+                  </Animated.View>
+                </React.Fragment>
+              );
+            })}
           </View>
         )}
       </ScrollView>

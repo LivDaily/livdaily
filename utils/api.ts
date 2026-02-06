@@ -560,16 +560,34 @@ export const groundingAPI = {
 // Mindfulness APIs
 export const mindfulnessAPI = {
   getContent: async () => {
-    return apiCall("/v1/mindfulness/content");
+    console.log("📡 Fetching mindfulness content from backend");
+    const result = await apiCall("/v1/mindfulness/content");
+    
+    // Ensure we always return an array
+    if (!result) {
+      console.warn("⚠️ No mindfulness content returned from backend");
+      return [];
+    }
+    
+    if (!Array.isArray(result)) {
+      console.warn("⚠️ Mindfulness content is not an array, wrapping in array");
+      return [result];
+    }
+    
+    console.log(`✅ Fetched ${result.length} mindfulness content items`);
+    return result;
   },
 
   getContentById: async (id: string) => {
+    console.log(`📡 Fetching mindfulness content by ID: ${id}`);
     return apiCall(`/v1/mindfulness/content/${id}`);
   },
 
   generateNew: async () => {
     console.log("🤖 Generating new mindfulness content via AI");
-    return apiCall("/v1/ai/generate", {
+    console.log("📡 Calling POST /v1/ai/generate with module=mindfulness");
+    
+    const result = await apiCall("/v1/ai/generate", {
       method: "POST",
       body: JSON.stringify({
         module: "mindfulness",
@@ -578,9 +596,23 @@ export const mindfulnessAPI = {
         tone: "calm",
       }),
     });
+    
+    if (result) {
+      console.log("✅ AI generation successful:", {
+        id: result.id,
+        title: result.title,
+        category: result.category,
+        duration: result.duration,
+      });
+    } else {
+      console.error("❌ AI generation failed - no result returned");
+    }
+    
+    return result;
   },
 
   getPremiumContent: async () => {
+    console.log("📡 Fetching premium mindfulness content");
     return apiCall("/v1/mindfulness/premium");
   },
 
@@ -589,6 +621,7 @@ export const mindfulnessAPI = {
     content: string;
     mood?: string;
   }) => {
+    console.log("📡 Creating mindfulness journal entry");
     return apiCall("/v1/mindfulness/journal", {
       method: "POST",
       body: JSON.stringify(data),
@@ -596,11 +629,13 @@ export const mindfulnessAPI = {
   },
 
   getJournalEntries: async () => {
+    console.log("📡 Fetching mindfulness journal entries");
     return apiCall("/v1/mindfulness/journal");
   },
 
   getSubscription: async () => {
     // Return free subscription for anonymous users
+    console.log("📡 Getting subscription status (default: free for anonymous)");
     return { subscriptionType: 'free', status: 'active' };
   },
 };
