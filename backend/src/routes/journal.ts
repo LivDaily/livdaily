@@ -1,6 +1,6 @@
 import type { App } from '../index.js';
 import { eq, and, gte, lte, desc } from 'drizzle-orm';
-import * as schema from '../db/schema.js';
+import * as liqdailySchema from '../db/liqdaily-schema.js';
 import type { FastifyRequest, FastifyReply } from 'fastify';
 
 export function registerJournalRoutes(app: App) {
@@ -26,19 +26,19 @@ export function registerJournalRoutes(app: App) {
     app.logger.info({ userId, startDate, endDate }, 'Fetching journal entries');
 
     try {
-      let whereClause = eq(schema.journalEntries.userId, userId);
+      let whereClause = eq(liqdailySchema.journalEntries.userId, userId);
 
       if (startDate && endDate) {
         whereClause = and(
-          eq(schema.journalEntries.userId, userId),
-          gte(schema.journalEntries.createdAt, new Date(startDate)),
-          lte(schema.journalEntries.createdAt, new Date(endDate))
+          eq(liqdailySchema.journalEntries.userId, userId),
+          gte(liqdailySchema.journalEntries.createdAt, new Date(startDate)),
+          lte(liqdailySchema.journalEntries.createdAt, new Date(endDate))
         );
       }
 
       let query = app.db.query.journalEntries.findMany({
         where: whereClause,
-        orderBy: desc(schema.journalEntries.createdAt),
+        orderBy: desc(liqdailySchema.journalEntries.createdAt),
       });
 
       const entries = await query;
@@ -48,12 +48,12 @@ export function registerJournalRoutes(app: App) {
 
       return entries.slice(0, limitNum).map(e => ({
         id: e.id,
+        title: e.title,
         content: e.content,
         mood: e.mood,
-        energyLevel: e.energyLevel,
-        promptUsed: e.promptUsed,
-        rhythmPhase: e.rhythmPhase,
+        tags: e.tags,
         createdAt: e.createdAt,
+        updatedAt: e.updatedAt,
       }));
     } catch (error) {
       app.logger.error({ err: error, userId }, 'Failed to fetch journal entries');
@@ -65,11 +65,10 @@ export function registerJournalRoutes(app: App) {
   app.fastify.post('/api/journal', async (
     request: FastifyRequest<{
       Body: {
+        title?: string;
         content: string;
         mood?: string;
-        energyLevel?: string;
-        promptUsed?: string;
-        rhythmPhase?: string;
+        tags?: string[];
       };
     }>,
     reply: FastifyReply
@@ -78,18 +77,17 @@ export function registerJournalRoutes(app: App) {
     if (!session) return;
 
     const userId = session.user.id;
-    const { content, mood, energyLevel, promptUsed, rhythmPhase } = request.body;
+    const { title, content, mood, tags } = request.body;
 
     app.logger.info({ userId }, 'Creating journal entry');
 
     try {
-      const result = await app.db.insert(schema.journalEntries).values({
+      const result = await app.db.insert(liqdailySchema.journalEntries).values({
         userId,
+        title,
         content,
         mood,
-        energyLevel,
-        promptUsed,
-        rhythmPhase,
+        tags,
       }).returning();
 
       const entry = result[0];
@@ -97,12 +95,12 @@ export function registerJournalRoutes(app: App) {
 
       return {
         id: entry.id,
+        title: entry.title,
         content: entry.content,
         mood: entry.mood,
-        energyLevel: entry.energyLevel,
-        promptUsed: entry.promptUsed,
-        rhythmPhase: entry.rhythmPhase,
+        tags: entry.tags,
         createdAt: entry.createdAt,
+        updatedAt: entry.updatedAt,
       };
     } catch (error) {
       app.logger.error({ err: error, userId }, 'Failed to create journal entry');
@@ -128,7 +126,7 @@ export function registerJournalRoutes(app: App) {
     try {
       // Verify ownership
       const existing = await app.db.query.journalEntries.findFirst({
-        where: eq(schema.journalEntries.id, id),
+        where: eq(liqdailySchema.journalEntries.id, id),
       });
 
       if (!existing) {
@@ -139,8 +137,8 @@ export function registerJournalRoutes(app: App) {
         return reply.status(403).send({ error: 'Unauthorized' });
       }
 
-      await app.db.delete(schema.journalEntries)
-        .where(eq(schema.journalEntries.id, id));
+      await app.db.delete(liqdailySchema.journalEntries)
+        .where(eq(liqdailySchema.journalEntries.id, id));
 
       app.logger.info({ entryId: id }, 'Journal entry deleted');
 

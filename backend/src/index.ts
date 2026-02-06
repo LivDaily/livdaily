@@ -1,6 +1,7 @@
 import { createApplication } from "@specific-dev/framework";
 import * as appSchema from './db/schema.js';
 import * as authSchema from './db/auth-schema.js';
+import * as liqdailySchema from './db/liqdaily-schema.js';
 
 // Import route registration functions
 import { registerAiRoutes } from './routes/ai.js';
@@ -16,9 +17,12 @@ import { registerMotivationRoutes } from './routes/motivation.js';
 import { registerAdminRoutes } from './routes/admin.js';
 import { registerMindfulnessRoutes } from './routes/mindfulness.js';
 import { registerMindfulnessAdminRoutes } from './routes/mindfulness-admin.js';
+import { registerV1AuthRoutes } from './routes/v1-auth.js';
+import { registerV1ModuleRoutes } from './routes/v1-modules.js';
+import { registerV1AiRoutes } from './routes/v1-ai.js';
 
 // Combine schemas
-const schema = { ...appSchema, ...authSchema };
+const schema = { ...appSchema, ...authSchema, ...liqdailySchema };
 
 // Create application with combined schema
 export const app = await createApplication(schema);
@@ -46,6 +50,11 @@ registerMotivationRoutes(app);
 registerAdminRoutes(app);
 registerMindfulnessRoutes(app);
 registerMindfulnessAdminRoutes(app);
+
+// Register V1 API endpoints (anonymous/guest mode)
+registerV1AuthRoutes(app);
+registerV1ModuleRoutes(app);
+registerV1AiRoutes(app);
 
 await app.run();
 app.logger.info('LivDaily wellness app running');

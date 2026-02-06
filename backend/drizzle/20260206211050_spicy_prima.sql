@@ -1,0 +1,1 @@
+DROP TABLE "legacy_journal_entries" CASCADE;
