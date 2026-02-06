@@ -83,12 +83,7 @@ export default function NutritionScreen() {
     
     try {
       const today = new Date().toISOString().split('T')[0];
-      const response = await aiAPI.generate({
-        module: 'nutrition',
-        goal: 'Generate 3-5 simple daily nutrition tasks',
-        tone: 'supportive',
-        constraints: { date: today },
-      });
+      const response = await nutritionAPI.generateAITasks(today);
 
       if (response) {
         showAlert('Success', 'New nutrition tasks generated!');

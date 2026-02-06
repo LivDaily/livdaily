@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
-import { mindfulnessAPI, aiAPI } from '@/utils/api';
+import { mindfulnessAPI, aiAPI, premiumAPI } from '@/utils/api';
 import { LoadingState, ErrorState, EmptyState, useAlert } from '@/components/LoadingButton';
 
 interface MindfulnessContent {
@@ -40,6 +40,7 @@ export default function MindfulnessScreen() {
   const { showAlert, AlertComponent } = useAlert();
   const [content, setContent] = useState<MindfulnessContent[]>([]);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const [premiumFeatures, setPremiumFeatures] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
@@ -54,9 +55,10 @@ export default function MindfulnessScreen() {
     setError(null);
 
     try {
-      const [contentData, subscriptionData] = await Promise.all([
+      const [contentData, subscriptionData, premiumData] = await Promise.all([
         mindfulnessAPI.getContent(),
         mindfulnessAPI.getSubscription(),
+        premiumAPI.getFeatures('mindfulness'),
       ]);
       
       // Validate and set content
@@ -70,6 +72,14 @@ export default function MindfulnessScreen() {
       
       // Set subscription (default to free for anonymous users)
       setSubscription(subscriptionData || { subscriptionType: 'free', status: 'active' });
+      
+      // Set premium features
+      if (Array.isArray(premiumData)) {
+        setPremiumFeatures(premiumData);
+        console.log(`✅ Loaded ${premiumData.length} premium features`);
+      } else {
+        setPremiumFeatures([]);
+      }
     } catch (err) {
       console.error('❌ Failed to load mindfulness data:', err);
       setError('Failed to load mindfulness content');
@@ -85,16 +95,11 @@ export default function MindfulnessScreen() {
     setGenerating(true);
 
     try {
-      const result = await aiAPI.generate({
-        module: 'mindfulness',
-        goal: 'Generate calming mindfulness meditation content',
-        timeAvailable: 10,
-        tone: 'calm',
-      });
+      const result = await mindfulnessAPI.generateNew();
 
       if (result) {
         showAlert('Success', 'New mindfulness content generated!');
-        loadData(); // Reload to show new content
+        await loadData(); // Reload to show new content
       } else {
         showAlert('Error', 'Failed to generate content. Please try again.');
       }
@@ -309,7 +314,24 @@ export default function MindfulnessScreen() {
         </Animated.View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Available Content</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <Text style={styles.sectionTitle}>Available Content</Text>
+            <TouchableOpacity
+              onPress={handleGenerateContent}
+              disabled={generating}
+              style={{
+                backgroundColor: colors.primary,
+                paddingHorizontal: 16,
+                paddingVertical: 8,
+                borderRadius: 12,
+              }}
+              activeOpacity={0.7}
+            >
+              <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: '600' }}>
+                {generating ? 'Generating...' : '+ New'}
+              </Text>
+            </TouchableOpacity>
+          </View>
           
           {contentList.length === 0 ? (
             <View style={styles.emptyContainer}>
@@ -363,6 +385,40 @@ export default function MindfulnessScreen() {
             })
           )}
         </View>
+
+        {premiumFeatures.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Premium Features</Text>
+            {premiumFeatures.map((feature, index) => (
+              <Animated.View
+                key={feature.id}
+                entering={FadeInDown.delay(800 + index * 100).duration(600)}
+              >
+                <TouchableOpacity
+                  style={styles.contentCard}
+                  onPress={() => {
+                    showAlert(
+                      feature.featureName || 'Premium Feature',
+                      feature.content?.description || 'Unlock this premium feature to access advanced mindfulness practices.',
+                      [{ text: 'OK' }]
+                    );
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.contentHeader}>
+                    <Text style={styles.contentTitle}>{feature.featureName || 'Premium Feature'}</Text>
+                    <View style={styles.durationBadge}>
+                      <Text style={styles.durationText}>Premium</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.contentDescription} numberOfLines={2}>
+                    {feature.content?.description || 'Advanced mindfulness practice'}
+                  </Text>
+                </TouchableOpacity>
+              </Animated.View>
+            ))}
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );

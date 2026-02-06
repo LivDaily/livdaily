@@ -247,11 +247,11 @@ interface AlertModalProps {
   visible: boolean;
   title: string;
   message: string;
-  buttons?: Array<{
+  buttons?: {
     text: string;
     onPress?: () => void;
     style?: 'default' | 'cancel' | 'destructive';
-  }>;
+  }[];
   onDismiss?: () => void;
 }
 
@@ -314,11 +314,11 @@ export function useAlert() {
     visible: boolean;
     title: string;
     message: string;
-    buttons: Array<{
+    buttons: {
       text: string;
       onPress?: () => void;
       style?: 'default' | 'cancel' | 'destructive';
-    }>;
+    }[];
   }>({
     visible: false,
     title: '',
@@ -329,11 +329,11 @@ export function useAlert() {
   const showAlert = (
     title: string,
     message: string,
-    buttons?: Array<{
+    buttons?: {
       text: string;
       onPress?: () => void;
       style?: 'default' | 'cancel' | 'destructive';
-    }>
+    }[]
   ) => {
     setAlertState({
       visible: true,

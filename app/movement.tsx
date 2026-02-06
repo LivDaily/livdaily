@@ -13,7 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/IconSymbol';
 import { useAppTheme } from '@/contexts/ThemeContext';
-import { movementAPI } from '@/utils/api';
+import { movementAPI, premiumAPI } from '@/utils/api';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { useAlert } from '@/components/LoadingButton';
 
@@ -38,8 +38,10 @@ export default function MovementScreen() {
   const { showAlert, AlertComponent } = useAlert();
   const [logs, setLogs] = useState<MovementLog[]>([]);
   const [stats, setStats] = useState<MovementStats | null>(null);
+  const [premiumFeatures, setPremiumFeatures] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showPremium, setShowPremium] = useState(false);
   const [activityType, setActivityType] = useState('');
   const [duration, setDuration] = useState('');
   const [notes, setNotes] = useState('');
@@ -53,18 +55,21 @@ export default function MovementScreen() {
   const loadData = async () => {
     try {
       setLoading(true);
-      console.log('Loading movement logs and stats');
-      const [logsData, statsData] = await Promise.all([
+      console.log('Loading movement logs, stats, and premium features');
+      const [logsData, statsData, premiumData] = await Promise.all([
         movementAPI.getLogs(),
         movementAPI.getStats('week'),
+        premiumAPI.getFeatures('movement'),
       ]);
       setLogs(logsData || []);
       setStats(statsData || null);
+      setPremiumFeatures(Array.isArray(premiumData) ? premiumData : []);
       console.log('Movement data loaded successfully');
     } catch (error) {
       console.error('Failed to load movement data:', error);
       setLogs([]);
       setStats(null);
+      setPremiumFeatures([]);
     } finally {
       setLoading(false);
     }
@@ -409,6 +414,53 @@ export default function MovementScreen() {
                 </TouchableOpacity>
               </View>
             </Animated.View>
+          )}
+
+          {premiumFeatures.length > 0 && (
+            <>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginHorizontal: 24, marginBottom: 16 }}>
+                <Text style={styles.sectionTitle}>Premium Workouts</Text>
+                <TouchableOpacity
+                  onPress={() => setShowPremium(!showPremium)}
+                  activeOpacity={0.7}
+                >
+                  <IconSymbol
+                    ios_icon_name={showPremium ? 'chevron.up' : 'chevron.down'}
+                    android_material_icon_name={showPremium ? 'expand-less' : 'expand-more'}
+                    size={24}
+                    color={colors.primary}
+                  />
+                </TouchableOpacity>
+              </View>
+              {showPremium && (
+                <Animated.View entering={FadeInDown.duration(400)} style={styles.logsList}>
+                  {premiumFeatures.slice(0, 3).map((feature, index) => (
+                    <TouchableOpacity
+                      key={feature.id}
+                      style={styles.logCard}
+                      onPress={() => {
+                        showAlert(
+                          feature.featureName || 'Premium Workout',
+                          feature.content?.description || 'Advanced workout routine with personalized training.',
+                          [{ text: 'OK' }]
+                        );
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <View style={styles.logHeader}>
+                        <Text style={styles.logActivity}>{feature.featureName || 'Premium Workout'}</Text>
+                        <View style={{ backgroundColor: colors.primary, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 }}>
+                          <Text style={{ color: '#FFFFFF', fontSize: 12, fontWeight: '600' }}>Premium</Text>
+                        </View>
+                      </View>
+                      <Text style={styles.logDate}>
+                        {feature.content?.description || 'Advanced movement routine'}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </Animated.View>
+              )}
+            </>
           )}
 
           <Text style={styles.sectionTitle}>Recent Activity</Text>

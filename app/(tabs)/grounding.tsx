@@ -13,7 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { IconSymbol } from '@/components/IconSymbol';
 import { useAppTheme } from '@/contexts/ThemeContext';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
-import { groundingAPI } from '@/utils/api';
+import { groundingAPI, premiumAPI } from '@/utils/api';
 import { useRouter } from 'expo-router';
 
 interface GroundingSession {
@@ -28,6 +28,7 @@ export default function GroundingScreen() {
   const { colors } = useAppTheme();
   const router = useRouter();
   const [sessions, setSessions] = useState<GroundingSession[]>([]);
+  const [premiumFeatures, setPremiumFeatures] = useState<any[]>([]);
   const [selectedType, setSelectedType] = useState<string>('breathwork');
   const [selectedDuration, setSelectedDuration] = useState<number>(5);
 
@@ -45,13 +46,19 @@ export default function GroundingScreen() {
   }, []);
 
   const loadSessions = async () => {
-    console.log('Loading grounding sessions');
+    console.log('Loading grounding sessions and premium features');
     try {
-      const data = await groundingAPI.getSessions();
-      setSessions(data || []);
+      const [sessionsData, premiumData] = await Promise.all([
+        groundingAPI.getSessions(),
+        premiumAPI.getFeatures('grounding'),
+      ]);
+      setSessions(sessionsData || []);
+      setPremiumFeatures(Array.isArray(premiumData) ? premiumData : []);
+      console.log(`✅ Loaded ${sessionsData?.length || 0} sessions and ${premiumData?.length || 0} premium features`);
     } catch (error) {
-      console.error('Failed to load grounding sessions:', error);
+      console.error('Failed to load grounding data:', error);
       setSessions([]);
+      setPremiumFeatures([]);
     }
   };
 
@@ -313,6 +320,29 @@ export default function GroundingScreen() {
             <Text style={styles.startButtonText}>Begin Session</Text>
           </TouchableOpacity>
         </Animated.View>
+
+        {premiumFeatures.length > 0 && (
+          <View style={styles.sessionsSection}>
+            <Text style={styles.sectionTitle}>Premium Features</Text>
+            {premiumFeatures.slice(0, 3).map((feature, index) => (
+              <Animated.View
+                key={feature.id}
+                entering={FadeInDown.delay(index * 100).duration(600)}
+                style={styles.sessionCard}
+              >
+                <View style={styles.sessionHeader}>
+                  <Text style={styles.sessionType}>{feature.featureName || 'Premium Feature'}</Text>
+                  <View style={[styles.durationBadge, { backgroundColor: colors.primary, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 }]}>
+                    <Text style={{ color: '#FFFFFF', fontSize: 12, fontWeight: '600' }}>Premium</Text>
+                  </View>
+                </View>
+                <Text style={styles.sessionDate}>
+                  {feature.content?.description || 'Advanced grounding technique'}
+                </Text>
+              </Animated.View>
+            ))}
+          </View>
+        )}
 
         <View style={styles.sessionsSection}>
           <Text style={styles.sectionTitle}>Recent Sessions</Text>

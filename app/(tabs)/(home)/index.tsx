@@ -18,7 +18,7 @@ import { useAppTheme } from '@/contexts/ThemeContext';
 import { commonStyles } from '@/styles/commonStyles';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { useAuth } from '@/contexts/AuthContext';
-import { motivationAPI } from '@/utils/api';
+import { motivationAPI, imagesAPI } from '@/utils/api';
 import { useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
@@ -46,6 +46,7 @@ export default function HomeScreen() {
   const [currentPhase, setCurrentPhase] = useState<string>('morning');
   const [greeting, setGreeting] = useState<string>('');
   const [weeklyMotivation, setWeeklyMotivation] = useState<string>('');
+  const [dailyImages, setDailyImages] = useState<{ [key: string]: string }>({});
 
   const formatTime = (hour: number): string => {
     const period = hour >= 12 ? 'PM' : 'AM';
@@ -59,7 +60,7 @@ export default function HomeScreen() {
       name: 'Morning Arrival',
       time: `${formatTime(6)} - ${formatTime(10)}`,
       description: 'Begin your day with gentle presence',
-      image: 'https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?w=800',
+      image: dailyImages['morning'] || 'https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?w=800',
       icon: 'sunrise',
       androidIcon: 'wb-twilight',
     },
@@ -68,7 +69,7 @@ export default function HomeScreen() {
       name: 'Midday Grounding',
       time: `${formatTime(10)} - ${formatTime(14)}`,
       description: 'Find your center in the day',
-      image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800',
+      image: dailyImages['midday'] || 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800',
       icon: 'sun.max',
       androidIcon: 'wb-sunny',
     },
@@ -77,7 +78,7 @@ export default function HomeScreen() {
       name: 'Afternoon Movement',
       time: `${formatTime(14)} - ${formatTime(18)}`,
       description: 'Flow with your energy',
-      image: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800',
+      image: dailyImages['afternoon'] || 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800',
       icon: 'figure.walk',
       androidIcon: 'directions-walk',
     },
@@ -86,7 +87,7 @@ export default function HomeScreen() {
       name: 'Evening Unwinding',
       time: `${formatTime(18)} - ${formatTime(22)}`,
       description: 'Release the day with care',
-      image: 'https://images.unsplash.com/photo-1495616811223-4d98c6e9c869?w=800',
+      image: dailyImages['evening'] || 'https://images.unsplash.com/photo-1495616811223-4d98c6e9c869?w=800',
       icon: 'sunset',
       androidIcon: 'wb-twilight',
     },
@@ -95,7 +96,7 @@ export default function HomeScreen() {
       name: 'Night Rest',
       time: `${formatTime(22)} - ${formatTime(6)}`,
       description: 'Embrace peaceful restoration',
-      image: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=800',
+      image: dailyImages['night'] || 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=800',
       icon: 'moon.stars',
       androidIcon: 'nights-stay',
     },
@@ -108,8 +109,9 @@ export default function HomeScreen() {
 
   useEffect(() => {
     if (user && !authLoading) {
-      console.log('User authenticated, loading weekly motivation');
+      console.log('User authenticated, loading weekly motivation and daily images');
       loadWeeklyMotivation();
+      loadDailyImages();
     }
   }, [user, authLoading]);
 
@@ -124,6 +126,31 @@ export default function HomeScreen() {
     } catch (error) {
       console.error('Failed to load weekly motivation:', error);
       setWeeklyMotivation('');
+    }
+  };
+
+  const loadDailyImages = async () => {
+    try {
+      console.log('🖼️ Loading daily images for rhythm phases');
+      const modules = ['morning', 'midday', 'afternoon', 'evening', 'night'];
+      const imagePromises = modules.map(module => 
+        imagesAPI.getDailyImage(module).then(data => ({ module, url: data?.imageUrl }))
+      );
+      
+      const results = await Promise.all(imagePromises);
+      const imageMap: { [key: string]: string } = {};
+      
+      results.forEach(result => {
+        if (result.url) {
+          imageMap[result.module] = result.url;
+        }
+      });
+      
+      setDailyImages(imageMap);
+      console.log('✅ Daily images loaded successfully');
+    } catch (error) {
+      console.error('Failed to load daily images:', error);
+      setDailyImages({});
     }
   };
 

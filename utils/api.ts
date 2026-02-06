@@ -283,6 +283,36 @@ export const userAPI = {
   getPatterns: async () => {
     return apiCall("/api/user/patterns");
   },
+
+  getPreferences: async () => {
+    return apiCall("/v1/user/preferences");
+  },
+
+  updatePreferences: async (data: {
+    fontSize?: string;
+    highContrast?: boolean;
+    reducedMotion?: boolean;
+    screenReaderEnabled?: boolean;
+    voiceControlEnabled?: boolean;
+    notificationPreferences?: any;
+    trackingPreferences?: any;
+  }) => {
+    return apiCall("/v1/user/preferences", {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  },
+
+  getSettings: async () => {
+    return apiCall("/v1/user/settings");
+  },
+
+  updateSettings: async (data: any) => {
+    return apiCall("/v1/user/settings", {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  },
 };
 
 // Daily Rhythms APIs
@@ -374,6 +404,23 @@ export const movementAPI = {
   getStats: async (period: "week" | "month") => {
     return apiCall(`/v1/movement/stats?period=${period}`);
   },
+
+  getPremiumContent: async () => {
+    return apiCall("/v1/movement/premium");
+  },
+
+  generateAIWorkout: async (duration: number, energy?: string) => {
+    console.log("🤖 Generating AI workout routine");
+    return apiCall("/v1/ai/generate", {
+      method: "POST",
+      body: JSON.stringify({
+        module: "movement",
+        goal: "Generate personalized workout routine",
+        timeAvailable: duration,
+        tone: energy || "moderate",
+      }),
+    });
+  },
 };
 
 // Nutrition APIs
@@ -393,6 +440,22 @@ export const nutritionAPI = {
     return apiCall(`/v1/nutrition/tasks/${id}`, {
       method: "PUT",
       body: JSON.stringify(data),
+    });
+  },
+
+  getStats: async (period: "week" | "month") => {
+    return apiCall(`/v1/nutrition/stats?period=${period}`);
+  },
+
+  generateAITasks: async (date: string) => {
+    console.log("🤖 Generating AI nutrition tasks for date:", date);
+    return apiCall("/v1/ai/generate", {
+      method: "POST",
+      body: JSON.stringify({
+        module: "nutrition",
+        goal: "Generate simple daily nutrition tasks",
+        constraints: { date },
+      }),
     });
   },
 };
@@ -421,6 +484,37 @@ export const sleepAPI = {
   getStats: async (period: "week" | "month") => {
     return apiCall(`/v1/sleep/stats?period=${period}`);
   },
+
+  getPremiumContent: async () => {
+    return apiCall("/v1/sleep/premium");
+  },
+
+  createDreamJournal: async (data: {
+    content: string;
+    mood?: string;
+    date: string;
+  }) => {
+    return apiCall("/v1/sleep/dream-journal", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+
+  getAnalysis: async () => {
+    return apiCall("/v1/sleep/analysis");
+  },
+
+  generateAIContent: async () => {
+    console.log("🤖 Generating AI sleep content");
+    return apiCall("/v1/ai/generate", {
+      method: "POST",
+      body: JSON.stringify({
+        module: "sleep",
+        goal: "Generate calming sleep content",
+        tone: "calm",
+      }),
+    });
+  },
 };
 
 // Grounding APIs
@@ -440,6 +534,27 @@ export const groundingAPI = {
       body: JSON.stringify(data),
     });
   },
+
+  getPremiumContent: async () => {
+    return apiCall("/v1/grounding/premium");
+  },
+
+  getStats: async (period: "week" | "month") => {
+    return apiCall(`/v1/grounding/stats?period=${period}`);
+  },
+
+  generateAIContent: async (sessionType: string, duration: number) => {
+    console.log("🤖 Generating AI grounding content");
+    return apiCall("/v1/ai/generate", {
+      method: "POST",
+      body: JSON.stringify({
+        module: "grounding",
+        goal: `Generate ${sessionType} grounding exercise`,
+        timeAvailable: duration,
+        tone: "calm",
+      }),
+    });
+  },
 };
 
 // Mindfulness APIs
@@ -450,6 +565,23 @@ export const mindfulnessAPI = {
 
   getContentById: async (id: string) => {
     return apiCall(`/v1/mindfulness/content/${id}`);
+  },
+
+  generateNew: async () => {
+    console.log("🤖 Generating new mindfulness content via AI");
+    return apiCall("/v1/ai/generate", {
+      method: "POST",
+      body: JSON.stringify({
+        module: "mindfulness",
+        goal: "Generate calming mindfulness meditation content",
+        timeAvailable: 10,
+        tone: "calm",
+      }),
+    });
+  },
+
+  getPremiumContent: async () => {
+    return apiCall("/v1/mindfulness/premium");
   },
 
   createJournalEntry: async (data: {
@@ -513,6 +645,42 @@ export const motivationAPI = {
 
   getHistory: async () => {
     return apiCall("/v1/motivation/history");
+  },
+};
+
+// Images APIs
+export const imagesAPI = {
+  getDailyImage: async (module: string) => {
+    return apiCall(`/v1/images/daily?module=${module}`);
+  },
+
+  rotateImages: async () => {
+    return apiCall("/v1/images/rotate", {
+      method: "POST",
+      body: JSON.stringify({}),
+    });
+  },
+};
+
+// Journal Stats API
+export const journalStatsAPI = {
+  getStats: async (period: "week" | "month") => {
+    return apiCall(`/v1/journal/stats?period=${period}`);
+  },
+};
+
+// Premium Features APIs
+export const premiumAPI = {
+  getFeatures: async (module?: string) => {
+    const query = module ? `?module=${module}` : '';
+    return apiCall(`/v1/premium/features${query}`);
+  },
+};
+
+// Wellness Stats API (unified)
+export const wellnessAPI = {
+  getStats: async (period: "week" | "month") => {
+    return apiCall(`/v1/wellness/stats?period=${period}`);
   },
 };
 

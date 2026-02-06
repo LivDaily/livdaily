@@ -13,7 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/IconSymbol';
 import { useAppTheme } from '@/contexts/ThemeContext';
-import { sleepAPI } from '@/utils/api';
+import { sleepAPI, premiumAPI } from '@/utils/api';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { useAlert } from '@/components/LoadingButton';
 
@@ -43,8 +43,10 @@ export default function SleepScreen() {
   const { showAlert, AlertComponent } = useAlert();
   const [logs, setLogs] = useState<SleepLog[]>([]);
   const [stats, setStats] = useState<SleepStats | null>(null);
+  const [premiumContent, setPremiumContent] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showPremium, setShowPremium] = useState(false);
   const [qualityRating, setQualityRating] = useState(5);
   const [windDownActivity, setWindDownActivity] = useState('');
   const [reflection, setReflection] = useState('');
@@ -57,18 +59,21 @@ export default function SleepScreen() {
   const loadData = async () => {
     try {
       setLoading(true);
-      console.log('Loading sleep logs and stats');
-      const [logsData, statsData] = await Promise.all([
+      console.log('Loading sleep logs, stats, and premium content');
+      const [logsData, statsData, premiumData] = await Promise.all([
         sleepAPI.getLogs(),
         sleepAPI.getStats('week'),
+        sleepAPI.getPremiumContent(),
       ]);
       setLogs(logsData || []);
       setStats(statsData || null);
+      setPremiumContent(Array.isArray(premiumData) ? premiumData : []);
       console.log('Sleep data loaded successfully');
     } catch (error) {
       console.error('Failed to load sleep data:', error);
       setLogs([]);
       setStats(null);
+      setPremiumContent([]);
     } finally {
       setLoading(false);
     }
@@ -459,6 +464,55 @@ export default function SleepScreen() {
                 </TouchableOpacity>
               </View>
             </Animated.View>
+          )}
+
+          {premiumContent.length > 0 && (
+            <>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginHorizontal: 24, marginTop: 24, marginBottom: 16 }}>
+                <Text style={styles.sectionTitle}>Premium Sleep Content</Text>
+                <TouchableOpacity
+                  onPress={() => setShowPremium(!showPremium)}
+                  activeOpacity={0.7}
+                >
+                  <IconSymbol
+                    ios_icon_name={showPremium ? 'chevron.up' : 'chevron.down'}
+                    android_material_icon_name={showPremium ? 'expand-less' : 'expand-more'}
+                    size={24}
+                    color={colors.primary}
+                  />
+                </TouchableOpacity>
+              </View>
+              {showPremium && (
+                <Animated.View entering={FadeInDown.duration(400)} style={styles.logsList}>
+                  {premiumContent.slice(0, 3).map((content, index) => (
+                    <TouchableOpacity
+                      key={content.id}
+                      style={styles.logCard}
+                      onPress={() => {
+                        showAlert(
+                          content.title || 'Premium Content',
+                          content.description || 'Advanced sleep content to improve your rest quality.',
+                          [{ text: 'OK' }]
+                        );
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <View style={styles.logHeader}>
+                        <Text style={styles.logDate}>{content.title || 'Premium Feature'}</Text>
+                        <View style={{ backgroundColor: colors.primary, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 }}>
+                          <Text style={{ color: '#FFFFFF', fontSize: 12, fontWeight: '600' }}>
+                            {content.durationMinutes ? `${content.durationMinutes} min` : 'Premium'}
+                          </Text>
+                        </View>
+                      </View>
+                      <Text style={styles.logDetail}>
+                        {content.description || content.contentType || 'Advanced sleep content'}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </Animated.View>
+              )}
+            </>
           )}
 
           <Text style={styles.sectionTitle}>Recent Sleep</Text>

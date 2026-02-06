@@ -100,28 +100,67 @@ export default function ProfileScreen() {
     );
   };
 
-  const handleAccessibilityPress = () => {
+  const handleAccessibilityPress = async () => {
     console.log('User tapped Accessibility Features');
-    showAlert(
-      'Accessibility Features',
-      'Customize your experience:\n\n• Adjustable font sizes\n• Screen reader compatibility\n• High contrast mode\n• Reduced motion options\n• Voice control support\n\nThese features help make LivDaily accessible to everyone.'
-    );
+    
+    try {
+      // Load current preferences
+      const preferences = await userAPI.getPreferences();
+      console.log('Current accessibility preferences:', preferences);
+      
+      showAlert(
+        'Accessibility Features',
+        `Current Settings:\n\n• Font Size: ${preferences?.fontSize || 'Medium'}\n• High Contrast: ${preferences?.highContrast ? 'On' : 'Off'}\n• Reduced Motion: ${preferences?.reducedMotion ? 'On' : 'Off'}\n• Screen Reader: ${preferences?.screenReaderEnabled ? 'On' : 'Off'}\n• Voice Control: ${preferences?.voiceControlEnabled ? 'On' : 'Off'}\n\nThese features help make LivDaily accessible to everyone.`
+      );
+    } catch (error) {
+      console.error('Failed to load accessibility preferences:', error);
+      showAlert(
+        'Accessibility Features',
+        'Customize your experience:\n\n• Adjustable font sizes\n• Screen reader compatibility\n• High contrast mode\n• Reduced motion options\n• Voice control support\n\nThese features help make LivDaily accessible to everyone.'
+      );
+    }
   };
 
-  const handleNotificationsPress = () => {
+  const handleNotificationsPress = async () => {
     console.log('User tapped Presence Notifications');
-    showAlert(
-      'Presence Notifications',
-      'Gentle reminders throughout your day:\n\n• Morning arrival prompts\n• Midday grounding check-ins\n• Evening wind-down reminders\n• Personalized timing based on your patterns\n\nNotifications adapt to your rhythm and can be customized or turned off anytime.'
-    );
+    
+    try {
+      // Load current preferences
+      const preferences = await userAPI.getPreferences();
+      const notifPrefs = preferences?.notificationPreferences || {};
+      
+      showAlert(
+        'Presence Notifications',
+        `Current Settings:\n\n• Morning Arrival: ${notifPrefs.morningArrival ? 'On' : 'Off'}\n• Midday Grounding: ${notifPrefs.middayGrounding ? 'On' : 'Off'}\n• Afternoon Movement: ${notifPrefs.afternoonMovement ? 'On' : 'Off'}\n• Evening Unwind: ${notifPrefs.eveningUnwind ? 'On' : 'Off'}\n• Night Rest: ${notifPrefs.nightRest ? 'On' : 'Off'}\n\nNotifications adapt to your rhythm and can be customized or turned off anytime.`
+      );
+    } catch (error) {
+      console.error('Failed to load notification preferences:', error);
+      showAlert(
+        'Presence Notifications',
+        'Gentle reminders throughout your day:\n\n• Morning arrival prompts\n• Midday grounding check-ins\n• Evening wind-down reminders\n• Personalized timing based on your patterns\n\nNotifications adapt to your rhythm and can be customized or turned off anytime.'
+      );
+    }
   };
 
-  const handleTrackingPress = () => {
+  const handleTrackingPress = async () => {
     console.log('User tapped Tracking Preferences');
-    showAlert(
-      'Tracking Preferences',
-      'Optional wellness tracking:\n\n• Movement and activity logs\n• Nutrition task completion\n• Sleep quality tracking\n• Journaling patterns\n• Grounding session history\n\nAll tracking is optional and can be turned on or off at any time. Your data is private and secure.'
-    );
+    
+    try {
+      // Load current preferences
+      const preferences = await userAPI.getPreferences();
+      const trackingPrefs = preferences?.trackingPreferences || {};
+      
+      showAlert(
+        'Tracking Preferences',
+        `Current Settings:\n\n• Movement Tracking: ${trackingPrefs.movementTracking ? 'On' : 'Off'}\n• Nutrition Tracking: ${trackingPrefs.nutritionTracking ? 'On' : 'Off'}\n• Sleep Tracking: ${trackingPrefs.sleepTracking ? 'On' : 'Off'}\n• Journal Tracking: ${trackingPrefs.journalTracking ? 'On' : 'Off'}\n• Grounding Tracking: ${trackingPrefs.groundingTracking ? 'On' : 'Off'}\n\nAll tracking is optional and can be turned on or off at any time. Your data is private and secure.`
+      );
+    } catch (error) {
+      console.error('Failed to load tracking preferences:', error);
+      showAlert(
+        'Tracking Preferences',
+        'Optional wellness tracking:\n\n• Movement and activity logs\n• Nutrition task completion\n• Sleep quality tracking\n• Journaling patterns\n• Grounding session history\n\nAll tracking is optional and can be turned on or off at any time. Your data is private and secure.'
+      );
+    }
   };
 
   const handlePrivacyPress = () => {
