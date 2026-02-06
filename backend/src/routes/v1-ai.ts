@@ -42,7 +42,7 @@ export function registerV1AiRoutes(app: App) {
       const contentSchema = z.object({
         title: z.string().describe('A compelling title for the content'),
         content: z.string().describe('Detailed content appropriate for the module and goal'),
-        category: z.string().optional().describe('Content category'),
+        category: z.string().describe('Content category'),
         duration: z.number().optional().describe('Duration in minutes'),
       });
 
@@ -205,6 +205,7 @@ function buildUserPrompt(
   }
 
   prompt += '\nMake the content practical, actionable, and easy to follow.';
+  prompt += '\nAlways include a specific category or type (e.g., "Meditation", "Breathing Exercise", "Workout Routine", "Meal Suggestion", etc.) that best describes this content.';
 
   return prompt;
 }
