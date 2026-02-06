@@ -344,8 +344,9 @@ export default function SleepScreen() {
     },
   });
 
-  const avgQualityText = stats?.avgQuality.toFixed(1) || '0';
-  const avgDurationText = stats?.avgDuration.toFixed(1) || '0';
+  // Extract values with proper null checks to prevent toString errors
+  const avgQualityText = stats?.avgQuality !== undefined ? stats.avgQuality.toFixed(1) : '0';
+  const avgDurationText = stats?.avgDuration !== undefined ? stats.avgDuration.toFixed(1) : '0';
 
   return (
     <>

@@ -27,8 +27,8 @@ export default function TabLayout() {
             {
               name: 'Mindful',
               route: '/(tabs)/mindfulness',
-              ios_icon_name: 'sparkles',
-              android_material_icon_name: 'auto-awesome',
+              ios_icon_name: 'leaf',
+              android_material_icon_name: 'spa',
             },
             {
               name: 'Nutrition',

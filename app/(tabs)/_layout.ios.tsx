@@ -18,7 +18,7 @@ export default function TabLayout() {
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="mindfulness">
         <Label>Mindful</Label>
-        <Icon sf={{ default: 'sparkles', selected: 'sparkles' }} drawable="auto-awesome" />
+        <Icon sf={{ default: 'leaf', selected: 'leaf.fill' }} drawable="spa" />
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="nutrition">
         <Label>Nutrition</Label>

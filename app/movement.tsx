@@ -306,8 +306,9 @@ export default function MovementScreen() {
     },
   });
 
-  const totalMinutesText = stats?.totalMinutes.toString() || '0';
-  const sessionsCountText = stats?.sessionsCount.toString() || '0';
+  // Extract values with proper null checks to prevent toString errors
+  const totalMinutesText = stats?.totalMinutes !== undefined ? stats.totalMinutes.toString() : '0';
+  const sessionsCountText = stats?.sessionsCount !== undefined ? stats.sessionsCount.toString() : '0';
 
   return (
     <>
