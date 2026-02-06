@@ -2,6 +2,7 @@ import type { App } from '../index.js';
 import { eq, desc } from 'drizzle-orm';
 import * as schema from '../db/liqdaily-schema.js';
 import type { FastifyRequest, FastifyReply } from 'fastify';
+import { unauthorized, badRequest, validateRequired } from '../utils/errors.js';
 
 // Helper to extract user ID from token (for anonymous users)
 const getUserId = (authHeader?: string): string | null => {
@@ -25,7 +26,7 @@ export function registerV1ModuleRoutes(app: App) {
   ): Promise<any[] | void> => {
     const userId = getUserId(request.headers.authorization);
     if (!userId) {
-      return reply.status(401).send({ error: 'Missing authorization token' });
+      return unauthorized(reply);
     }
 
     app.logger.info({ userId }, 'Fetching journal entries');
@@ -69,10 +70,16 @@ export function registerV1ModuleRoutes(app: App) {
   ): Promise<any | void> => {
     const userId = getUserId(request.headers.authorization);
     if (!userId) {
-      return reply.status(401).send({ error: 'Missing authorization token' });
+      return unauthorized(reply);
     }
 
     const { title, content, mood, tags } = request.body;
+
+    // Validate required fields
+    const validation = validateRequired(request.body, ['content']);
+    if (!validation.valid) {
+      return badRequest(reply, `Missing required fields: ${validation.missing.join(', ')}`, 'VALIDATION_ERROR');
+    }
 
     app.logger.info({ userId }, 'Creating journal entry');
 

@@ -20,6 +20,9 @@ import { registerMindfulnessAdminRoutes } from './routes/mindfulness-admin.js';
 import { registerV1AuthRoutes } from './routes/v1-auth.js';
 import { registerV1ModuleRoutes } from './routes/v1-modules.js';
 import { registerV1AiRoutes } from './routes/v1-ai.js';
+import { registerV1PremiumRoutes } from './routes/v1-premium.js';
+import { registerV1StatsRoutes } from './routes/v1-stats.js';
+import { registerV1SettingsRoutes } from './routes/v1-settings.js';
 
 // Combine schemas
 const schema = { ...appSchema, ...authSchema, ...liqdailySchema };
@@ -55,6 +58,9 @@ registerMindfulnessAdminRoutes(app);
 registerV1AuthRoutes(app);
 registerV1ModuleRoutes(app);
 registerV1AiRoutes(app);
+registerV1PremiumRoutes(app);
+registerV1StatsRoutes(app);
+registerV1SettingsRoutes(app);
 
 await app.run();
 app.logger.info('LivDaily wellness app running');

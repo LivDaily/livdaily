@@ -96,3 +96,65 @@ export const contentItems = pgTable('content_items', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().$onUpdate(() => new Date()).notNull(),
 });
+
+// Premium Features - premium content for modules
+export const premiumFeatures = pgTable('premium_features', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  module: text('module').notNull(), // grounding, movement, sleep, mindfulness
+  featureName: text('feature_name').notNull(),
+  featureType: text('feature_type').notNull(), // advanced_breathwork, extended_sessions, personalized_rituals, etc.
+  content: jsonb('content'), // feature-specific content
+  isPremium: boolean('is_premium').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// Daily Images - weekly rotating images for modules
+export const dailyImages = pgTable('daily_images', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  module: text('module').notNull(), // which module this image is for
+  imageUrl: text('image_url').notNull(),
+  weekNumber: integer('week_number').notNull(),
+  dayOfWeek: integer('day_of_week').notNull(), // 0-6 (Sunday-Saturday)
+  season: text('season'), // spring, summer, fall, winter
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  lastUsed: timestamp('last_used'),
+});
+
+// User Preferences - accessibility and notification settings
+export const userPreferences = pgTable('user_preferences', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  fontSize: text('font_size').default('medium'), // small, medium, large, extra_large
+  highContrast: boolean('high_contrast').default(false),
+  reducedMotion: boolean('reduced_motion').default(false),
+  screenReaderEnabled: boolean('screen_reader_enabled').default(false),
+  voiceControlEnabled: boolean('voice_control_enabled').default(false),
+  notificationPreferences: jsonb('notification_preferences').default({
+    morningArrival: true,
+    middayGrounding: true,
+    afternoonMovement: true,
+    eveningUnwind: true,
+    nightRest: true,
+  }),
+  trackingPreferences: jsonb('tracking_preferences').default({
+    movementTracking: true,
+    nutritionTracking: true,
+    sleepTracking: true,
+    journalTracking: true,
+    groundingTracking: true,
+  }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().$onUpdate(() => new Date()).notNull(),
+});
+
+// Sleep Premium Content - advanced sleep features
+export const sleepPremiumContent = pgTable('sleep_premium_content', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  contentType: text('content_type').notNull(), // wind_down_flow, dream_journal, sleep_analysis, sleep_coaching, sleep_sounds
+  title: text('title').notNull(),
+  description: text('description'),
+  audioUrl: text('audio_url'),
+  durationMinutes: integer('duration_minutes'),
+  isPremium: boolean('is_premium').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
