@@ -1,5 +1,5 @@
 import type { App } from '../index.js';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, and } from 'drizzle-orm';
 import * as schema from '../db/liqdaily-schema.js';
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import { unauthorized, badRequest, validateRequired } from '../utils/errors.js';
@@ -124,21 +124,31 @@ export function registerV1ModuleRoutes(app: App) {
   ): Promise<any[] | void> => {
     const userId = getUserId(request.headers.authorization);
     if (!userId) {
-      return reply.status(401).send({ error: 'Missing authorization token' });
+      return unauthorized(reply);
     }
 
     app.logger.info({ userId }, 'Fetching mindfulness content');
 
     try {
+      // Build query with module filter
+      let whereCondition: any = and(
+        eq(schema.contentItems.userId, userId as any),
+        eq(schema.contentItems.module, 'mindfulness')
+      );
+
       let items = await app.db.query.contentItems.findMany({
-        where: eq(schema.contentItems.userId, userId as any),
+        where: whereCondition,
+        orderBy: desc(schema.contentItems.createdAt),
       });
 
+      // Additional client-side filter for category if provided
       if (request.query.category) {
         items = items.filter(i => i.category === request.query.category);
       }
 
       const limitNum = request.query.limit ? parseInt(request.query.limit) : items.length;
+
+      app.logger.info({ count: items.length, limit: limitNum }, 'Mindfulness content retrieved');
 
       return items.slice(0, limitNum).map(i => ({
         id: i.id,
@@ -169,10 +179,16 @@ export function registerV1ModuleRoutes(app: App) {
   ): Promise<any | void> => {
     const userId = getUserId(request.headers.authorization);
     if (!userId) {
-      return reply.status(401).send({ error: 'Missing authorization token' });
+      return unauthorized(reply);
     }
 
     const { title, content, category, duration, payload } = request.body;
+
+    // Validate required fields
+    const validation = validateRequired(request.body, ['title']);
+    if (!validation.valid) {
+      return badRequest(reply, `Missing required fields: ${validation.missing.join(', ')}`, 'VALIDATION_ERROR');
+    }
 
     app.logger.info({ userId }, 'Creating mindfulness content');
 

@@ -104,7 +104,10 @@ function buildSystemPrompt(module: string, tone?: string): string {
 - Breathing techniques integrated into the practice
 - Guidance for beginners and experienced practitioners
 - Specific benefits and how the practice helps
-- A welcoming, non-judgmental approach`,
+- A welcoming, non-judgmental approach
+- Compelling, soothing titles that attract users (e.g., "Morning Clarity Meditation", "Body Scan for Deep Relaxation", "Mindful Breathing: Find Your Calm")
+- Realistic duration between 5-20 minutes
+- Categories like: "Meditation", "Body Scan", "Breathing", "Visualization", "Mindful Walking", "Progressive Relaxation"`,
 
     breathwork: `Create guided breathing exercises with:
 - Clear step-by-step instructions (easy to follow)
