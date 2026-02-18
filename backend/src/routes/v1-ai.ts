@@ -43,7 +43,7 @@ export function registerV1AiRoutes(app: App) {
         title: z.string().describe('A compelling title for the content'),
         content: z.string().describe('Detailed content appropriate for the module and goal'),
         category: z.string().describe('Content category'),
-        duration: z.number().optional().describe('Duration in minutes'),
+        duration: z.number().nullable().describe('Duration in minutes, or null if not applicable'),
       });
 
       const systemPrompt = buildSystemPrompt(module, tone);
@@ -209,6 +209,7 @@ function buildUserPrompt(
 
   prompt += '\nMake the content practical, actionable, and easy to follow.';
   prompt += '\nAlways include a specific category or type (e.g., "Meditation", "Breathing Exercise", "Workout Routine", "Meal Suggestion", etc.) that best describes this content.';
+  prompt += '\nInclude a duration in minutes if applicable. If no specific duration makes sense for this content type, use null or omit the duration.';
 
   return prompt;
 }

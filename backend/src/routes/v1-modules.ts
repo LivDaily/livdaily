@@ -422,9 +422,12 @@ export function registerV1ModuleRoutes(app: App) {
   app.fastify.post('/v1/sleep', async (
     request: FastifyRequest<{
       Body: {
-        title: string;
+        title?: string;
         content?: string;
         duration?: number;
+        quality?: number;
+        pattern?: string;
+        wakeUpReason?: string;
         payload?: Record<string, any>;
       };
     }>,
@@ -432,32 +435,47 @@ export function registerV1ModuleRoutes(app: App) {
   ): Promise<any | void> => {
     const userId = getUserId(request.headers.authorization);
     if (!userId) {
-      return reply.status(401).send({ error: 'Missing authorization token' });
+      return unauthorized(reply);
     }
 
-    const { title, content, duration, payload } = request.body;
+    const { title, content, duration, quality, pattern, wakeUpReason, payload } = request.body;
+
+    app.logger.info({ userId }, 'Creating sleep log');
 
     try {
+      // Generate a default title if not provided
+      const sleepTitle = title || `Sleep Log - ${new Date().toLocaleDateString()}`;
+
       const result = await app.db.insert(schema.contentItems).values({
         userId: userId as any,
         module: 'sleep',
-        title,
+        title: sleepTitle,
         content,
         duration,
-        payload,
+        category: 'Sleep Log',
+        payload: {
+          ...payload,
+          quality,
+          pattern,
+          wakeUpReason,
+        },
         isAiGenerated: false,
       }).returning();
 
       const item = result[0];
+      app.logger.info({ itemId: item.id }, 'Sleep log created');
+
       return {
         id: item.id,
         title: item.title,
         content: item.content,
         duration: item.duration,
+        category: item.category,
         payload: item.payload,
         createdAt: item.createdAt,
       };
     } catch (error) {
+      app.logger.error({ err: error, userId }, 'Failed to create sleep log');
       throw error;
     }
   });
