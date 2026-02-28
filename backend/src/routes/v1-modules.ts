@@ -305,6 +305,106 @@ export function registerV1ModuleRoutes(app: App) {
     }
   });
 
+  app.fastify.put('/v1/nutrition/tasks/:id', async (
+    request: FastifyRequest<{
+      Params: { id: string };
+      Body: {
+        completed?: boolean;
+        notes?: string;
+      };
+    }>,
+    reply: FastifyReply
+  ): Promise<any | void> => {
+    const userId = getUserId(request.headers.authorization);
+    if (!userId) {
+      return unauthorized(reply);
+    }
+
+    const { id } = request.params;
+    const { completed, notes } = request.body;
+
+    app.logger.info({ userId, taskId: id }, 'Updating nutrition task');
+
+    try {
+      // Find the task first to verify ownership
+      const task = await app.db.query.contentItems.findFirst({
+        where: and(
+          eq(schema.contentItems.id, id as any),
+          eq(schema.contentItems.module, 'nutrition')
+        ),
+      });
+
+      // Check if task exists
+      if (!task) {
+        app.logger.warn({ userId, taskId: id }, 'Nutrition task not found');
+        return reply.status(404).send({
+          status: 404,
+          code: 'NOT_FOUND',
+          message: 'Nutrition task not found',
+        });
+      }
+
+      // Check if user owns this task
+      if (task.userId !== (userId as any)) {
+        app.logger.warn({ userId, taskId: id, ownerId: task.userId }, 'User does not own this nutrition task');
+        return reply.status(403).send({
+          status: 403,
+          code: 'FORBIDDEN',
+          message: 'You do not have permission to update this nutrition task',
+        });
+      }
+
+      // Update the task
+      const updateData: any = {};
+      if (completed !== undefined) {
+        updateData.payload = {
+          ...(task.payload as any),
+          completed,
+        };
+      }
+      if (notes !== undefined) {
+        updateData.payload = {
+          ...(updateData.payload || (task.payload as any)),
+          notes,
+        };
+      }
+
+      // Only update if there are changes
+      if (Object.keys(updateData).length === 0) {
+        // No changes, return current task
+        app.logger.info({ userId, taskId: id }, 'No changes to nutrition task');
+        return {
+          id: task.id,
+          title: task.title,
+          content: task.content,
+          completed: (task.payload as any)?.completed || false,
+          notes: (task.payload as any)?.notes || null,
+          createdAt: task.createdAt,
+        };
+      }
+
+      const result = await app.db.update(schema.contentItems)
+        .set(updateData)
+        .where(eq(schema.contentItems.id, id as any))
+        .returning();
+
+      const updated = result[0];
+      app.logger.info({ userId, taskId: id }, 'Nutrition task updated successfully');
+
+      return {
+        id: updated.id,
+        title: updated.title,
+        content: updated.content,
+        completed: (updated.payload as any)?.completed || false,
+        notes: (updated.payload as any)?.notes || null,
+        createdAt: updated.createdAt,
+      };
+    } catch (error) {
+      app.logger.error({ err: error, userId, taskId: id }, 'Failed to update nutrition task');
+      throw error;
+    }
+  });
+
   // =========================
   // Movement Endpoints
   // =========================
