@@ -436,7 +436,8 @@ export const nutritionAPI = {
     });
   },
 
-  updateTask: async (id: string, data: { completed: boolean; completedAt?: string }) => {
+  updateTask: async (id: string, data: { completed?: boolean; notes?: string }) => {
+    console.log(`[API] Requesting PUT /v1/nutrition/tasks/${id}`, data);
     return apiCall(`/v1/nutrition/tasks/${id}`, {
       method: "PUT",
       body: JSON.stringify(data),

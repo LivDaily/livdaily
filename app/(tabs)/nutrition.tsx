@@ -105,33 +105,34 @@ export default function NutritionScreen() {
     
     // Optimistic update
     const newCompleted = !task.completed;
-    const completedAt = newCompleted ? new Date().toISOString() : undefined;
     
-    setTasks(tasks.map(t => 
+    setTasks(prev => prev.map(t => 
       t.id === task.id 
-        ? { ...t, completed: newCompleted, completedAt }
+        ? { ...t, completed: newCompleted }
         : t
     ));
     
     try {
+      console.log(`[API] Toggling nutrition task ${task.id} -> completed: ${newCompleted}`);
       const result = await nutritionAPI.updateTask(task.id, {
         completed: newCompleted,
-        completedAt,
       });
 
       if (!result) {
         // Revert on failure
-        setTasks(tasks.map(t => 
+        setTasks(prev => prev.map(t => 
           t.id === task.id 
             ? task
             : t
         ));
         showAlert('Error', 'Failed to update task. Please try again.');
+      } else {
+        console.log(`✅ Nutrition task ${task.id} updated successfully`);
       }
     } catch (err) {
       console.error('❌ Failed to update task:', err);
       // Revert on error
-      setTasks(tasks.map(t => 
+      setTasks(prev => prev.map(t => 
         t.id === task.id 
           ? task
           : t
