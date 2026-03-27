@@ -21,6 +21,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Href } from 'expo-router';
+import { COLORS } from '@/constants/Colors';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -38,16 +39,24 @@ interface FloatingTabBarProps {
   bottomMargin?: number;
 }
 
+function getPillarColor(pathname: string): string {
+  if (pathname.includes('breathe')) return COLORS.breathe;
+  if (pathname.includes('restore')) return COLORS.restore;
+  return COLORS.arrive;
+}
+
 export default function FloatingTabBar({
   tabs,
   containerWidth = screenWidth * 0.95,
   borderRadius = 35,
-  bottomMargin
+  bottomMargin,
 }: FloatingTabBarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const theme = useTheme();
   const animatedValue = useSharedValue(0);
+
+  const activeColor = getPillarColor(pathname);
 
   const activeTabIndex = React.useMemo(() => {
     let bestMatch = -1;
@@ -58,14 +67,14 @@ export default function FloatingTabBar({
 
       if (pathname === tab.route) {
         score = 100;
-      }
-      else if (pathname.startsWith(tab.route as string)) {
+      } else if (pathname.startsWith(tab.route as string)) {
         score = 80;
-      }
-      else if (pathname.includes(tab.name)) {
+      } else if (pathname.includes(tab.name)) {
         score = 60;
-      }
-      else if (tab.route.includes('/(tabs)/') && pathname.includes(tab.route.split('/(tabs)/')[1])) {
+      } else if (
+        tab.route.includes('/(tabs)/') &&
+        pathname.includes(tab.route.split('/(tabs)/')[1])
+      ) {
         score = 40;
       }
 
@@ -88,8 +97,8 @@ export default function FloatingTabBar({
     }
   }, [activeTabIndex, animatedValue]);
 
-  const handleTabPress = (route: Href) => {
-    console.log('User tapped tab:', route);
+  const handleTabPress = (route: Href, name: string) => {
+    console.log('[TabBar] User tapped tab:', name, '→', route);
     router.push(route);
   };
 
@@ -148,13 +157,15 @@ export default function FloatingTabBar({
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['bottom']}>
-      <View style={[
-        styles.container,
-        {
-          width: containerWidth,
-          marginBottom: bottomMargin ?? 20
-        }
-      ]}>
+      <View
+        style={[
+          styles.container,
+          {
+            width: containerWidth,
+            marginBottom: bottomMargin ?? 20,
+          },
+        ]}
+      >
         <BlurView
           intensity={80}
           style={[dynamicStyles.blurContainer, { borderRadius }]}
@@ -164,40 +175,50 @@ export default function FloatingTabBar({
           <View style={styles.tabsContainer}>
             {tabs.map((tab, index) => {
               const isActive = activeTabIndex === index;
+              const iconColor = isActive
+                ? activeColor
+                : theme.dark
+                ? '#98989D'
+                : '#000000';
+              const labelColor = isActive
+                ? activeColor
+                : theme.dark
+                ? '#98989D'
+                : '#8E8E93';
 
               return (
                 <React.Fragment key={index}>
-                <TouchableOpacity
-                  style={styles.tab}
-                  onPress={() => handleTabPress(tab.route)}
-                  activeOpacity={0.7}
-                  accessible={true}
-                  accessibilityRole="tab"
-                  accessibilityLabel={`${tab.name} tab`}
-                  accessibilityState={{ selected: isActive }}
-                  accessibilityHint={`Navigate to ${tab.name} screen`}
-                >
-                  <View style={styles.tabContent}>
-                    <IconSymbol
-                      android_material_icon_name={tab.android_material_icon_name}
-                      ios_icon_name={tab.ios_icon_name}
-                      size={24}
-                      color={isActive ? theme.colors.primary : (theme.dark ? '#98989D' : '#000000')}
-                    />
-                    <Text
-                      style={[
-                        styles.tabLabel,
-                        { color: theme.dark ? '#98989D' : '#8E8E93' },
-                        isActive && { color: theme.colors.primary, fontWeight: '600' },
-                      ]}
-                      numberOfLines={1}
-                      adjustsFontSizeToFit={true}
-                      minimumFontScale={0.8}
-                    >
-                      {tab.name}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.tab}
+                    onPress={() => handleTabPress(tab.route, tab.name)}
+                    activeOpacity={0.7}
+                    accessible={true}
+                    accessibilityRole="tab"
+                    accessibilityLabel={`${tab.name} tab`}
+                    accessibilityState={{ selected: isActive }}
+                    accessibilityHint={`Navigate to ${tab.name} screen`}
+                  >
+                    <View style={styles.tabContent}>
+                      <IconSymbol
+                        android_material_icon_name={tab.android_material_icon_name}
+                        ios_icon_name={tab.ios_icon_name}
+                        size={24}
+                        color={iconColor}
+                      />
+                      <Text
+                        style={[
+                          styles.tabLabel,
+                          { color: labelColor },
+                          isActive && { fontWeight: '600' },
+                        ]}
+                        numberOfLines={1}
+                        adjustsFontSizeToFit={true}
+                        minimumFontScale={0.8}
+                      >
+                        {tab.name}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
                 </React.Fragment>
               );
             })}
