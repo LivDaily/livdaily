@@ -4,11 +4,11 @@
     "slug": "livdaily",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/app-icon-brg.png",
+    "icon": "./assets/images/app-icon-bmu.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/images/app-icon-brg.png",
+      "image": "./assets/images/app-icon-bmu.png",
       "resizeMode": "contain",
       "backgroundColor": "#000000"
     },
@@ -33,7 +33,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/app-icon-brg.png",
+        "foregroundImage": "./assets/images/app-icon-bmu.png",
         "backgroundColor": "#000000"
       },
       "edgeToEdgeEnabled": true,
