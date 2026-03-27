@@ -15,38 +15,51 @@ export function PromptCard({ label, prompt, accentColor, accentMuted }: PromptCa
   return (
     <View
       style={{
-        backgroundColor: accentMuted,
-        borderRadius: 16,
-        borderCurve: 'continuous',
-        padding: 20,
-        borderLeftWidth: 4,
-        borderLeftColor: accentColor,
+        backgroundColor: C.surface,
+        borderRadius: 4,
+        padding: 24,
         borderWidth: 1,
         borderColor: C.border,
-        boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03)',
+        borderLeftWidth: 2,
+        borderLeftColor: accentColor,
+        boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
       } as any}
     >
       <Text
         style={{
-          fontSize: 11,
-          fontWeight: '700',
-          letterSpacing: 1.2,
+          fontSize: 10,
+          fontWeight: '600',
+          letterSpacing: 1.0,
           color: accentColor,
           textTransform: 'uppercase',
-          marginBottom: 12,
+          marginBottom: 16,
         }}
       >
         {label}
       </Text>
+      {/* Large decorative opening quote */}
+      <Text
+        style={{
+          fontSize: 64,
+          fontFamily: 'PlayfairDisplay_700Bold',
+          color: accentColor,
+          opacity: 0.12,
+          lineHeight: 48,
+          marginBottom: 4,
+        }}
+      >
+        {'"'}
+      </Text>
       <Text
         style={{
           fontSize: 22,
-          fontFamily: 'Lora_400Regular_Italic',
+          fontFamily: 'PlayfairDisplay_400Regular_Italic',
           color: C.text,
-          lineHeight: 32,
+          lineHeight: 34,
+          marginTop: -8,
         }}
       >
-        {`"${prompt}"`}
+        {prompt}
       </Text>
     </View>
   );

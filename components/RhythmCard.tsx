@@ -14,43 +14,56 @@ interface RhythmCardProps {
 export function RhythmCard({ title, duration, description, isSelected, onPress }: RhythmCardProps) {
   const C = useColors();
 
+  const borderTopColor = isSelected ? C.breathe : C.border;
+  const bgColor = isSelected ? C.breatheMuted : C.surface;
+  const borderColor = isSelected ? C.breathe + '40' : C.border;
+
   return (
     <AnimatedPressable onPress={onPress}>
       <View
         style={{
           width: 180,
-          backgroundColor: isSelected ? C.breatheMuted : C.surface,
-          borderRadius: 16,
-          borderCurve: 'continuous',
+          backgroundColor: bgColor,
+          borderRadius: 4,
           padding: 16,
-          borderWidth: 1.5,
-          borderColor: isSelected ? C.breathe + '60' : C.border,
-          borderTopWidth: 3,
-          borderTopColor: isSelected ? C.breathe : C.breathe + '40',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03)',
+          borderWidth: 1,
+          borderColor: borderColor,
+          borderTopWidth: 2,
+          borderTopColor: borderTopColor,
+          boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
         } as any}
       >
+        {/* Duration badge — outlined, no fill */}
         <View
           style={{
             alignSelf: 'flex-start',
-            backgroundColor: C.breatheMuted,
-            borderRadius: 8,
-            paddingHorizontal: 8,
+            borderWidth: 1,
+            borderColor: C.breathe + '50',
+            borderRadius: 2,
+            paddingHorizontal: 6,
             paddingVertical: 3,
-            marginBottom: 10,
+            marginBottom: 12,
           }}
         >
-          <Text style={{ fontSize: 11, fontWeight: '600', color: C.breathe }}>
+          <Text
+            style={{
+              fontSize: 10,
+              fontWeight: '600',
+              color: C.breathe,
+              letterSpacing: 0.8,
+              textTransform: 'uppercase',
+            }}
+          >
             {duration}
           </Text>
         </View>
         <Text
           style={{
-            fontSize: 16,
-            fontWeight: '700',
+            fontSize: 15,
+            fontFamily: 'PlayfairDisplay_700Bold',
             color: C.text,
             marginBottom: 6,
-            fontFamily: 'Lora_700Bold',
+            letterSpacing: -0.1,
           }}
         >
           {title}
@@ -59,7 +72,7 @@ export function RhythmCard({ title, duration, description, isSelected, onPress }
           style={{
             fontSize: 13,
             color: C.textSecondary,
-            lineHeight: 18,
+            lineHeight: 19,
           }}
           numberOfLines={3}
         >

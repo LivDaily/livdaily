@@ -9,8 +9,7 @@ import Animated, {
   useAnimatedStyle,
 } from "react-native-reanimated";
 import Reanimated from "react-native-reanimated";
-import { appleRed, borderColor } from "@/constants/Colors";
-import { IconCircle } from "./IconCircle";
+import { COLORS, DARK_COLORS, appleRed } from "@/constants/Colors";
 import { IconSymbol } from "./IconSymbol";
 
 configureReanimatedLogger({ strict: false });
@@ -18,6 +17,7 @@ configureReanimatedLogger({ strict: false });
 export default function ListItem({ listId }: { listId: string }) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
+  const C = isDark ? DARK_COLORS : COLORS;
 
   const RightAction = (
     prog: SharedValue<number>,
@@ -33,11 +33,11 @@ export default function ListItem({ listId }: { listId: string }) {
           if (process.env.EXPO_OS === "ios") {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
           }
-          console.log("delete");
+          console.log('[ListItem] Delete pressed for:', listId);
         }}
       >
         <Reanimated.View style={[styleAnimation, styles.rightAction]}>
-          <IconSymbol name="trash.fill" size={24} color="white" />
+          <IconSymbol name="trash.fill" size={20} color="white" />
         </Reanimated.View>
       </Pressable>
     );
@@ -54,10 +54,29 @@ export default function ListItem({ listId }: { listId: string }) {
         overshootRight={false}
         enableContextMenu
       >
-        <View style={styles.listItemContainer}>
-          <Text style={[styles.listItemText, { color: isDark ? "#FFFFFF" : "#000000" }]}>{listId}</Text>
+        {/* Editorial list item: thin left-border accent, no icon circle */}
+        <View
+          style={[
+            styles.listItemContainer,
+            {
+              borderBottomColor: C.divider,
+              backgroundColor: C.surface,
+              borderLeftColor: C.accent,
+            },
+          ]}
+        >
+          <Text
+            style={[
+              styles.listItemText,
+              {
+                color: C.text,
+                fontFamily: 'PlayfairDisplay_400Regular',
+              },
+            ]}
+          >
+            {listId}
+          </Text>
         </View>
-
       </ReanimatedSwipeable>
     </Animated.View>
   );
@@ -84,7 +103,7 @@ export const NicknameCircle = ({
         isEllipsis && styles.ellipsisCircle,
         {
           backgroundColor: color,
-          borderColor: isDark ? "#000000" : "#ffffff",
+          borderColor: isDark ? "#141210" : "#ffffff",
           marginLeft: index > 0 ? -6 : 0,
         },
       ]}
@@ -96,65 +115,33 @@ export const NicknameCircle = ({
 
 const styles = StyleSheet.create({
   listItemContainer: {
-    padding: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: borderColor,
-    backgroundColor: "transparent",
+    borderLeftWidth: 2,
   },
   listItemText: {
     fontSize: 16,
+    lineHeight: 22,
   },
   rightAction: {
-    width: 200,
-    height: 65,
+    width: 80,
+    height: '100%' as any,
     backgroundColor: appleRed,
     alignItems: "center",
     justifyContent: "center",
   },
-  swipeable: {
-    width: "100%",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: borderColor,
-    gap: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  leftContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    flexShrink: 1,
-  },
-  textContent: {
-    flexShrink: 1,
-  },
-  productCount: {
-    fontSize: 12,
-    color: "gray",
-  },
-  rightContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  nicknameContainer: {
-    flexDirection: "row",
-    marginRight: 4,
-  },
   nicknameCircle: {
-    fontSize: 12,
+    fontSize: 11,
     color: "white",
     borderWidth: 1,
     borderColor: "white",
-    borderRadius: 16,
+    borderRadius: 12,
     padding: 1,
-    width: 24,
-    height: 24,
+    width: 22,
+    height: 22,
     textAlign: "center",
-    lineHeight: 20,
+    lineHeight: 18,
   },
   ellipsisCircle: {
     lineHeight: 0,

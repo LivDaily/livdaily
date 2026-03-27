@@ -6,7 +6,6 @@ import {
   TextInput,
   Animated,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
@@ -83,8 +82,6 @@ export default function ArriveScreen() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const progressAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
-
-  // Stagger anims for cards
   const card1Anim = useRef(new Animated.Value(0)).current;
   const card2Anim = useRef(new Animated.Value(0)).current;
   const card3Anim = useRef(new Animated.Value(0)).current;
@@ -146,7 +143,6 @@ export default function ArriveScreen() {
   const minutesDisplay = Math.floor(secondsLeft / 60);
   const secondsDisplay = secondsLeft % 60;
   const timeString = `${minutesDisplay}:${secondsDisplay.toString().padStart(2, '0')}`;
-
   const beginButtonLabel = timerDone ? 'Begin Again' : 'Begin';
 
   const card1Style = {
@@ -166,198 +162,174 @@ export default function ArriveScreen() {
     <Animated.View style={{ flex: 1, opacity: fadeAnim, backgroundColor: C.background }}>
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
-        contentContainerStyle={{
-          paddingBottom: 120,
-          gap: 20,
-        }}
+        contentContainerStyle={{ paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Hero Banner with LinearGradient */}
-        <View style={{ height: 220, overflow: 'hidden' }}>
-          <LinearGradient
-            colors={['#C4956A', '#F7F4EF']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 0, y: 1 }}
-            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
-          />
-          {/* Watermark leaf */}
+        {/* Editorial hero — typographic, no gradient */}
+        <View
+          style={{
+            paddingTop: insets.top + 24,
+            paddingHorizontal: 24,
+            paddingBottom: 32,
+            borderBottomWidth: 1,
+            borderBottomColor: C.divider,
+            gap: 12,
+          }}
+        >
+          <PillarBadge label="Earth · Morning" pillar="arrive" />
           <Text
             style={{
-              position: 'absolute',
-              top: 10,
-              right: 16,
-              fontSize: 80,
-              opacity: 0.15,
-              lineHeight: 100,
+              fontSize: 40,
+              fontFamily: 'PlayfairDisplay_700Bold',
+              color: C.text,
+              letterSpacing: -0.5,
+              lineHeight: 46,
+              marginTop: 4,
             }}
           >
-            🌿
+            {greeting}
           </Text>
-          {/* Hero text */}
-          <View
+          <Text
             style={{
-              position: 'absolute',
-              bottom: 28,
-              left: 20,
-              right: 20,
-              gap: 8,
+              fontSize: 15,
+              color: C.textSecondary,
+              lineHeight: 22,
             }}
           >
-            <Text
-              style={{
-                fontSize: 34,
-                fontFamily: 'Lora_700Bold',
-                color: '#FFFFFF',
-                letterSpacing: -0.5,
-              }}
-            >
-              {greeting}
-            </Text>
-            <Text
-              style={{
-                fontSize: 16,
-                color: 'rgba(255,255,255,0.85)',
-                lineHeight: 22,
-              }}
-            >
-              Take a moment to land.
-            </Text>
-            <PillarBadge label="🌿 Earth · Morning" pillar="arrive" />
-          </View>
+            Take a moment to land.
+          </Text>
         </View>
 
-        {/* Daily Anchor — premium quote card */}
-        <Animated.View style={[{ paddingHorizontal: 20 }, card1Style]}>
-          <View
-            style={{
-              backgroundColor: C.arriveMuted,
-              borderRadius: 20,
-              borderCurve: 'continuous',
-              padding: 24,
-              borderLeftWidth: 4,
-              borderLeftColor: C.arrive,
-              borderWidth: 1,
-              borderColor: C.border,
-              overflow: 'hidden',
-              boxShadow: '0 2px 8px rgba(196,149,106,0.12), 0 4px 16px rgba(0,0,0,0.04)',
-            } as any}
-          >
-            {/* Decorative quotation mark */}
-            <Text
+        <View style={{ paddingHorizontal: 24, gap: 32, paddingTop: 32 }}>
+          {/* Daily Anchor — editorial quote card */}
+          <Animated.View style={card1Style}>
+            <View
               style={{
-                position: 'absolute',
-                top: -8,
-                left: 12,
-                fontSize: 80,
-                fontFamily: 'Lora_700Bold',
-                color: C.arrive,
-                opacity: 0.08,
-                lineHeight: 100,
-              }}
+                backgroundColor: C.surface,
+                borderRadius: 4,
+                padding: 24,
+                borderWidth: 1,
+                borderColor: C.border,
+                borderLeftWidth: 2,
+                borderLeftColor: C.arrive,
+                boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+              } as any}
             >
-              "
-            </Text>
-            <Text
-              style={{
-                fontSize: 11,
-                fontWeight: '700',
-                letterSpacing: 1.2,
-                color: C.arrive,
-                textTransform: 'uppercase',
-                marginBottom: 14,
-              }}
-            >
-              Today's Anchor
-            </Text>
-            <Text
-              style={{
-                fontSize: 24,
-                fontFamily: 'Lora_400Regular_Italic',
-                color: C.text,
-                lineHeight: 34,
-              }}
-            >
-              {`"${todayPrompt}"`}
-            </Text>
-          </View>
-        </Animated.View>
+              <Text
+                style={{
+                  fontSize: 10,
+                  fontWeight: '600',
+                  letterSpacing: 1.0,
+                  color: C.arrive,
+                  textTransform: 'uppercase',
+                  marginBottom: 16,
+                }}
+              >
+                Today's Anchor
+              </Text>
+              {/* Large decorative quote mark */}
+              <Text
+                style={{
+                  fontSize: 72,
+                  fontFamily: 'PlayfairDisplay_700Bold',
+                  color: C.arrive,
+                  opacity: 0.10,
+                  lineHeight: 52,
+                  marginBottom: 4,
+                }}
+              >
+                {'"'}
+              </Text>
+              <Text
+                style={{
+                  fontSize: 22,
+                  fontFamily: 'PlayfairDisplay_400Regular_Italic',
+                  color: C.text,
+                  lineHeight: 34,
+                  marginTop: -8,
+                }}
+              >
+                {todayPrompt}
+              </Text>
+            </View>
+          </Animated.View>
 
-        {/* Rhythm Reset */}
-        <Animated.View style={[{ paddingHorizontal: 20 }, card2Style]}>
-          <View
-            style={{
-              backgroundColor: C.surface,
-              borderRadius: 20,
-              borderCurve: 'continuous',
-              padding: 20,
-              borderWidth: 1,
-              borderColor: C.border,
-              boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03)',
-              gap: 16,
-            } as any}
-          >
+          {/* Thin divider */}
+          <View style={{ height: 1, backgroundColor: C.divider }} />
+
+          {/* Rhythm Reset */}
+          <Animated.View style={[card2Style, { gap: 20 }]}>
             <View style={{ gap: 4 }}>
               <Text
                 style={{
-                  fontSize: 11,
-                  fontWeight: '700',
-                  letterSpacing: 1.2,
+                  fontSize: 10,
+                  fontWeight: '600',
+                  letterSpacing: 1.0,
                   color: C.arrive,
                   textTransform: 'uppercase',
+                  marginBottom: 4,
                 }}
               >
                 Rhythm Reset
               </Text>
               <Text
                 style={{
-                  fontSize: 20,
-                  fontFamily: 'Lora_700Bold',
+                  fontSize: 24,
+                  fontFamily: 'PlayfairDisplay_700Bold',
                   color: C.text,
-                  letterSpacing: -0.2,
+                  letterSpacing: -0.3,
+                  lineHeight: 30,
                 }}
               >
-                Ground yourself in 2 minutes
+                Ground yourself{'\n'}in 2 minutes
               </Text>
               <Text
                 style={{
                   fontSize: 15,
                   color: C.textSecondary,
                   lineHeight: 22,
-                  marginTop: 4,
+                  marginTop: 8,
                 }}
               >
                 A simple sequence to anchor your body and quiet your mind before the day begins.
               </Text>
             </View>
 
-            {/* Steps */}
-            <View style={{ gap: 10 }}>
+            {/* Steps — left-border accent style */}
+            <View style={{ gap: 0 }}>
               {RHYTHM_STEPS.map((step, i) => {
                 const stepNum = i + 1;
+                const isLast = i === RHYTHM_STEPS.length - 1;
                 return (
-                  <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
-                    <View
+                  <View
+                    key={i}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'flex-start',
+                      gap: 16,
+                      paddingVertical: 12,
+                      borderBottomWidth: isLast ? 0 : 1,
+                      borderBottomColor: C.divider,
+                    }}
+                  >
+                    <Text
                       style={{
-                        width: 28,
-                        height: 28,
-                        borderRadius: 14,
-                        backgroundColor: C.arriveMuted,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
+                        fontSize: 11,
+                        fontWeight: '600',
+                        color: C.arrive,
+                        letterSpacing: 0.5,
+                        width: 20,
+                        paddingTop: 2,
                       }}
                     >
-                      <Text style={{ fontSize: 13, fontWeight: '700', color: C.arrive }}>
-                        {stepNum}
-                      </Text>
-                    </View>
+                      {String(stepNum).padStart(2, '0')}
+                    </Text>
                     <Text
                       style={{
                         fontSize: 15,
                         color: C.text,
                         lineHeight: 22,
                         flex: 1,
-                        paddingTop: 3,
                       }}
                     >
                       {step}
@@ -372,9 +344,9 @@ export default function ArriveScreen() {
               <View style={{ gap: 12 }}>
                 <View
                   style={{
-                    height: 6,
+                    height: 2,
                     backgroundColor: C.arriveMuted,
-                    borderRadius: 3,
+                    borderRadius: 1,
                     overflow: 'hidden',
                   }}
                 >
@@ -383,15 +355,14 @@ export default function ArriveScreen() {
                       height: '100%',
                       width: progressWidth,
                       backgroundColor: C.arrive,
-                      borderRadius: 3,
                     }}
                   />
                 </View>
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                   <Text
                     style={{
-                      fontSize: 28,
-                      fontFamily: 'Lora_700Bold',
+                      fontSize: 36,
+                      fontFamily: 'PlayfairDisplay_700Bold',
                       color: C.arrive,
                       letterSpacing: -0.5,
                     }}
@@ -403,12 +374,21 @@ export default function ArriveScreen() {
                       style={{
                         paddingHorizontal: 20,
                         paddingVertical: 10,
-                        borderRadius: 12,
-                        borderCurve: 'continuous',
+                        borderRadius: 4,
+                        borderWidth: 1,
+                        borderColor: C.border,
                         backgroundColor: C.surfaceSecondary,
-                      } as any}
+                      }}
                     >
-                      <Text style={{ fontSize: 15, fontWeight: '600', color: C.textSecondary }}>
+                      <Text
+                        style={{
+                          fontSize: 11,
+                          fontWeight: '600',
+                          letterSpacing: 1.0,
+                          textTransform: 'uppercase',
+                          color: C.textSecondary,
+                        }}
+                      >
                         Done
                       </Text>
                     </View>
@@ -420,13 +400,19 @@ export default function ArriveScreen() {
             {timerDone && (
               <View
                 style={{
-                  backgroundColor: C.arriveMuted,
-                  borderRadius: 12,
-                  padding: 14,
-                  alignItems: 'center',
+                  borderLeftWidth: 2,
+                  borderLeftColor: C.arrive,
+                  paddingLeft: 16,
+                  paddingVertical: 8,
                 }}
               >
-                <Text style={{ fontSize: 16, fontFamily: 'Lora_400Regular_Italic', color: C.arrive }}>
+                <Text
+                  style={{
+                    fontSize: 16,
+                    fontFamily: 'PlayfairDisplay_400Regular_Italic',
+                    color: C.arrive,
+                  }}
+                >
                   Well done. You've arrived.
                 </Text>
               </View>
@@ -436,50 +422,58 @@ export default function ArriveScreen() {
               <AnimatedPressable onPress={startTimer}>
                 <View
                   style={{
-                    backgroundColor: C.arrive,
-                    borderRadius: 14,
-                    borderCurve: 'continuous',
-                    paddingVertical: 16,
+                    backgroundColor: C.primary,
+                    borderRadius: 4,
+                    paddingVertical: 14,
                     alignItems: 'center',
-                  } as any}
+                  }}
                 >
-                  <Text style={{ fontSize: 16, fontWeight: '700', color: '#FFFFFF', letterSpacing: 0.2 }}>
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      fontWeight: '600',
+                      color: '#FFFFFF',
+                      letterSpacing: 1.2,
+                      textTransform: 'uppercase',
+                    }}
+                  >
                     {beginButtonLabel}
                   </Text>
                 </View>
               </AnimatedPressable>
             )}
-          </View>
-        </Animated.View>
+          </Animated.View>
 
-        {/* Intention Space */}
-        <Animated.View style={[{ paddingHorizontal: 20 }, card3Style]}>
-          <View
-            style={{
-              backgroundColor: C.surface,
-              borderRadius: 20,
-              borderCurve: 'continuous',
-              padding: 20,
-              borderWidth: 1,
-              borderColor: C.border,
-              boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03)',
-              gap: 12,
-            } as any}
-          >
+          {/* Thin divider */}
+          <View style={{ height: 1, backgroundColor: C.divider }} />
+
+          {/* Intention Space */}
+          <Animated.View style={[card3Style, { gap: 16, paddingBottom: 8 }]}>
             <View style={{ gap: 4 }}>
               <Text
                 style={{
-                  fontSize: 11,
-                  fontWeight: '700',
-                  letterSpacing: 1.2,
+                  fontSize: 10,
+                  fontWeight: '600',
+                  letterSpacing: 1.0,
                   color: C.arrive,
                   textTransform: 'uppercase',
+                  marginBottom: 4,
                 }}
               >
                 Set Your Intention
               </Text>
-              <Text style={{ fontSize: 15, color: C.textSecondary, lineHeight: 22 }}>
-                One word or phrase for today. No pressure.
+              <Text
+                style={{
+                  fontSize: 20,
+                  fontFamily: 'PlayfairDisplay_700Bold',
+                  color: C.text,
+                  letterSpacing: -0.2,
+                }}
+              >
+                One word for today
+              </Text>
+              <Text style={{ fontSize: 15, color: C.textSecondary, lineHeight: 22, marginTop: 4 }}>
+                No pressure. Just a direction.
               </Text>
             </View>
             <TextInput
@@ -492,11 +486,10 @@ export default function ArriveScreen() {
               placeholderTextColor={C.textTertiary}
               style={{
                 fontSize: 18,
-                fontFamily: 'Lora_400Regular',
+                fontFamily: 'PlayfairDisplay_400Regular',
                 color: C.text,
                 backgroundColor: C.surfaceSecondary,
-                borderRadius: 12,
-                borderCurve: 'continuous',
+                borderRadius: 4,
                 paddingHorizontal: 16,
                 paddingVertical: 14,
                 borderWidth: 1,
@@ -505,11 +498,11 @@ export default function ArriveScreen() {
               returnKeyType="done"
               maxLength={60}
             />
-            <Text style={{ fontSize: 13, color: C.textTertiary, lineHeight: 18 }}>
+            <Text style={{ fontSize: 12, color: C.textTertiary, lineHeight: 18 }}>
               This is just for you. It disappears when you leave.
             </Text>
-          </View>
-        </Animated.View>
+          </Animated.View>
+        </View>
       </ScrollView>
     </Animated.View>
   );

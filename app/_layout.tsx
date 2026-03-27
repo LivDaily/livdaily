@@ -20,8 +20,41 @@ import {
   Lora_700Bold,
   Lora_700Bold_Italic,
 } from "@expo-google-fonts/lora";
+import {
+  PlayfairDisplay_400Regular,
+  PlayfairDisplay_400Regular_Italic,
+  PlayfairDisplay_700Bold,
+  PlayfairDisplay_700Bold_Italic,
+} from "@expo-google-fonts/playfair-display";
 
 SplashScreen.preventAutoHideAsync();
+
+// Editorial theme overrides — warm parchment palette
+const EditorialLightTheme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    background: '#F7F5F0',
+    card: '#F7F5F0',
+    text: '#1A1814',
+    border: 'rgba(26,24,20,0.08)',
+    primary: '#2C2C2C',
+    notification: '#8B6F47',
+  },
+};
+
+const EditorialDarkTheme = {
+  ...DarkTheme,
+  colors: {
+    ...DarkTheme.colors,
+    background: '#141210',
+    card: '#1E1B18',
+    text: '#F0EDE6',
+    border: 'rgba(240,237,230,0.07)',
+    primary: '#F0EDE6',
+    notification: '#C4956A',
+  },
+};
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -31,6 +64,10 @@ export default function RootLayout() {
     Lora_400Regular_Italic,
     Lora_700Bold,
     Lora_700Bold_Italic,
+    PlayfairDisplay_400Regular,
+    PlayfairDisplay_400Regular_Italic,
+    PlayfairDisplay_700Bold,
+    PlayfairDisplay_700Bold_Italic,
   });
 
   useEffect(() => {
@@ -43,11 +80,13 @@ export default function RootLayout() {
     return null;
   }
 
+  const navTheme = colorScheme === "dark" ? EditorialDarkTheme : EditorialLightTheme;
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AuthProvider>
         <AppThemeProvider>
-          <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+          <ThemeProvider value={navTheme}>
             <SystemBars style="auto" />
             <Stack screenOptions={{ headerShown: false }}>
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

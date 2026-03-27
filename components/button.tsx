@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useRef, useCallback } from "react";
 import {
   ActivityIndicator,
+  Animated,
   Pressable,
   StyleSheet,
   Text,
@@ -8,7 +9,7 @@ import {
   useColorScheme,
   ViewStyle,
 } from "react-native";
-import { appleBlue, zincColors } from "@/constants/Colors";
+import { COLORS, DARK_COLORS } from "@/constants/Colors";
 
 type ButtonVariant = "filled" | "outline" | "ghost";
 type ButtonSize = "sm" | "md" | "lg";
@@ -36,92 +37,98 @@ export const Button: React.FC<ButtonProps> = ({
 }) => {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
+  const C = isDark ? DARK_COLORS : COLORS;
 
-  const sizeStyles: Record<
-    ButtonSize,
-    { height: number; fontSize: number; padding: number }
-  > = {
-    sm: { height: 36, fontSize: 14, padding: 12 },
-    md: { height: 44, fontSize: 16, padding: 16 },
-    lg: { height: 55, fontSize: 18, padding: 20 },
+  const scale = useRef(new Animated.Value(1)).current;
+
+  const animateIn = useCallback(() => {
+    Animated.spring(scale, { toValue: 0.97, useNativeDriver: true, speed: 50, bounciness: 2 }).start();
+  }, [scale]);
+
+  const animateOut = useCallback(() => {
+    Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 50, bounciness: 2 }).start();
+  }, [scale]);
+
+  const sizeStyles: Record<ButtonSize, { height: number; fontSize: number; paddingHorizontal: number; paddingVertical: number }> = {
+    sm: { height: 36, fontSize: 11, paddingHorizontal: 16, paddingVertical: 10 },
+    md: { height: 48, fontSize: 12, paddingHorizontal: 24, paddingVertical: 14 },
+    lg: { height: 56, fontSize: 13, paddingHorizontal: 32, paddingVertical: 16 },
   };
 
-  const getVariantStyle = () => {
-    const baseStyle: ViewStyle = {
-      borderRadius: 12,
+  const getContainerStyle = (): ViewStyle => {
+    const base: ViewStyle = {
+      borderRadius: 4,
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
+      height: sizeStyles[size].height,
+      paddingHorizontal: sizeStyles[size].paddingHorizontal,
+      paddingVertical: sizeStyles[size].paddingVertical,
+      opacity: disabled ? 0.45 : 1,
     };
 
     switch (variant) {
       case "filled":
-        return {
-          ...baseStyle,
-          backgroundColor: isDark ? zincColors[50] : zincColors[900],
-        };
+        return { ...base, backgroundColor: C.primary };
       case "outline":
         return {
-          ...baseStyle,
+          ...base,
           backgroundColor: "transparent",
           borderWidth: 1,
-          borderColor: isDark ? zincColors[700] : zincColors[300],
+          borderColor: C.border,
         };
       case "ghost":
-        return {
-          ...baseStyle,
-          backgroundColor: "transparent",
-        };
+        return { ...base, backgroundColor: "transparent" };
     }
   };
 
-  const getTextColor = () => {
-    if (disabled) {
-      return isDark ? zincColors[500] : zincColors[400];
-    }
-
+  const getTextColor = (): string => {
+    if (disabled) return C.textTertiary;
     switch (variant) {
       case "filled":
-        return isDark ? zincColors[900] : zincColors[50];
+        return isDark ? C.background : "#FFFFFF";
       case "outline":
+        return C.text;
       case "ghost":
-        return appleBlue;
+        return C.accent;
     }
   };
 
+  const textColor = getTextColor();
+
   return (
-    <Pressable
-      onPress={onPress}
-      disabled={disabled || loading}
-      style={[
-        getVariantStyle(),
-        {
-          height: sizeStyles[size].height,
-          paddingHorizontal: sizeStyles[size].padding,
-          opacity: disabled ? 0.5 : 1,
-        },
-        style,
-      ]}
-    >
-      {loading ? (
-        <ActivityIndicator color={getTextColor()} />
-      ) : (
-        <Text
-          style={StyleSheet.flatten([
-            {
-              fontSize: sizeStyles[size].fontSize,
-              color: getTextColor(),
-              textAlign: "center",
-              marginBottom: 0,
-              fontWeight: "700",
-            },
-            textStyle,
-          ])}
-        >
-          {children}
-        </Text>
-      )}
-    </Pressable>
+    <Animated.View style={[{ transform: [{ scale }] }, disabled && { opacity: 0.45 }]}>
+      <Pressable
+        onPressIn={animateIn}
+        onPressOut={animateOut}
+        onPress={() => {
+          console.log('[Button] Pressed:', typeof children === 'string' ? children : 'button');
+          onPress?.();
+        }}
+        disabled={disabled || loading}
+        style={[getContainerStyle(), style]}
+      >
+        {loading ? (
+          <ActivityIndicator color={textColor} size="small" />
+        ) : (
+          <Text
+            style={StyleSheet.flatten([
+              {
+                fontSize: sizeStyles[size].fontSize,
+                color: textColor,
+                fontWeight: "600",
+                letterSpacing: 1.2,
+                textTransform: "uppercase",
+                textAlign: "center",
+              },
+              textStyle,
+            ])}
+          >
+            {children}
+          </Text>
+        )}
+      </Pressable>
+    </Animated.View>
   );
 };
 

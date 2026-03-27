@@ -10,27 +10,28 @@ interface PillarBadgeProps {
 export function PillarBadge({ label, pillar }: PillarBadgeProps) {
   const C = useColors();
 
-  const bgColor = pillar === 'arrive' ? C.arriveMuted : pillar === 'breathe' ? C.breatheMuted : C.restoreMuted;
+  const borderColor = pillar === 'arrive' ? C.arrive : pillar === 'breathe' ? C.breathe : C.restore;
   const textColor = pillar === 'arrive' ? C.arrive : pillar === 'breathe' ? C.breathe : C.restore;
 
   return (
     <View
       style={{
         alignSelf: 'flex-start',
-        backgroundColor: bgColor,
-        borderRadius: 20,
-        paddingHorizontal: 12,
-        paddingVertical: 6,
+        backgroundColor: 'transparent',
+        borderRadius: 2,
+        paddingHorizontal: 8,
+        paddingVertical: 4,
         borderWidth: 1,
-        borderColor: textColor + '30',
+        borderColor: borderColor + '60',
       }}
     >
       <Text
         style={{
-          fontSize: 13,
-          fontWeight: '500',
+          fontSize: 10,
+          fontWeight: '600',
           color: textColor,
-          letterSpacing: 0.2,
+          letterSpacing: 1.0,
+          textTransform: 'uppercase',
         }}
       >
         {label}

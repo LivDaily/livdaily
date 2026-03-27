@@ -5,7 +5,6 @@ import {
   ScrollView,
   Animated,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
@@ -64,7 +63,6 @@ interface WindDownPractice {
   duration: string;
   durationSeconds: number;
   description: string;
-  emoji: string;
 }
 
 const WIND_DOWN_PRACTICES: WindDownPractice[] = [
@@ -74,7 +72,6 @@ const WIND_DOWN_PRACTICES: WindDownPractice[] = [
     duration: '5 min',
     durationSeconds: 300,
     description: 'A slow journey through the body, releasing tension from head to toe.',
-    emoji: '🌊',
   },
   {
     id: 2,
@@ -82,7 +79,6 @@ const WIND_DOWN_PRACTICES: WindDownPractice[] = [
     duration: '3 min',
     durationSeconds: 180,
     description: 'Three things. No more, no less. Let them land.',
-    emoji: '🙏',
   },
   {
     id: 3,
@@ -90,7 +86,6 @@ const WIND_DOWN_PRACTICES: WindDownPractice[] = [
     duration: '4 min',
     durationSeconds: 240,
     description: 'A gentle breath pattern to prepare the nervous system for rest.',
-    emoji: '🌙',
   },
 ];
 
@@ -110,7 +105,6 @@ export default function RestoreScreen() {
   const closingIndex = dayOfYear % CLOSING_THOUGHTS.length;
   const todayPrompt = RESTORE_PROMPTS[promptIndex];
   const closingThought = CLOSING_THOUGHTS[closingIndex];
-  const closingQuote = `"${closingThought}"`;
 
   const [activeTimer, setActiveTimer] = useState<number | null>(null);
   const [secondsLeft, setSecondsLeft] = useState(0);
@@ -123,11 +117,7 @@ export default function RestoreScreen() {
   ).current;
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
-
-  // Stagger anims for practice cards
-  const cardAnims = useRef(
-    WIND_DOWN_PRACTICES.map(() => new Animated.Value(0))
-  ).current;
+  const cardAnims = useRef(WIND_DOWN_PRACTICES.map(() => new Animated.Value(0))).current;
 
   useEffect(() => {
     Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: true }).start();
@@ -184,252 +174,244 @@ export default function RestoreScreen() {
   const timeString = `${minutes}:${seconds.toString().padStart(2, '0')}`;
 
   return (
-    <Animated.View style={{ flex: 1, opacity: fadeAnim, backgroundColor: '#EEE8E0' }}>
+    <Animated.View style={{ flex: 1, opacity: fadeAnim, backgroundColor: C.background }}>
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
-        contentContainerStyle={{
-          paddingBottom: 120,
-          gap: 20,
-        }}
+        contentContainerStyle={{ paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
-        style={{ backgroundColor: '#EEE8E0' }}
+        style={{ backgroundColor: C.background }}
       >
-        {/* Atmospheric gradient hero */}
-        <View style={{ height: 200, overflow: 'hidden' }}>
-          <LinearGradient
-            colors={['#7B9EA8', '#EEE8E0']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 0, y: 1 }}
-            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
-          />
-          {/* Watermark */}
+        {/* Editorial hero — typographic */}
+        <View
+          style={{
+            paddingTop: insets.top + 24,
+            paddingHorizontal: 24,
+            paddingBottom: 32,
+            borderBottomWidth: 1,
+            borderBottomColor: C.divider,
+            gap: 12,
+          }}
+        >
+          <PillarBadge label="Water · Evening" pillar="restore" />
           <Text
             style={{
-              position: 'absolute',
-              top: 8,
-              right: 16,
-              fontSize: 72,
-              opacity: 0.12,
-              lineHeight: 90,
+              fontSize: 40,
+              fontFamily: 'PlayfairDisplay_700Bold',
+              color: C.text,
+              letterSpacing: -0.5,
+              lineHeight: 46,
+              marginTop: 4,
             }}
           >
-            🌙
+            Restore
           </Text>
-          <View
-            style={{
-              position: 'absolute',
-              bottom: 24,
-              left: 20,
-              right: 20,
-              gap: 8,
-            }}
-          >
-            <Text
-              style={{
-                fontSize: 34,
-                fontFamily: 'Lora_700Bold',
-                color: '#FFFFFF',
-                letterSpacing: -0.5,
-              }}
-            >
-              Restore
-            </Text>
-            <Text style={{ fontSize: 16, color: 'rgba(255,255,255,0.85)', lineHeight: 22 }}>
-              Release the day. Return to stillness.
-            </Text>
-            <PillarBadge label="🌊 Water · Evening" pillar="restore" />
-          </View>
+          <Text style={{ fontSize: 15, color: C.textSecondary, lineHeight: 22 }}>
+            Release the day. Return to stillness.
+          </Text>
         </View>
 
-        {/* Evening Reflection */}
-        <View style={{ paddingHorizontal: 20 }}>
+        <View style={{ paddingHorizontal: 24, paddingTop: 32, gap: 32 }}>
+          {/* Evening Reflection */}
           <PromptCard
             label="Evening Reflection"
             prompt={todayPrompt}
             accentColor={C.restore}
             accentMuted={C.restoreMuted}
           />
-        </View>
 
-        {/* Wind-Down Practices */}
-        <View style={{ paddingHorizontal: 20, gap: 12 }}>
-          <Text
-            style={{
-              fontSize: 11,
-              fontWeight: '700',
-              letterSpacing: 1.2,
-              color: C.restore,
-              textTransform: 'uppercase',
-            }}
-          >
-            Wind-Down Practices
-          </Text>
+          {/* Thin divider */}
+          <View style={{ height: 1, backgroundColor: C.divider }} />
 
-          {WIND_DOWN_PRACTICES.map((practice, index) => {
-            const isActive = activeTimer === practice.id;
-            const progressWidth = progressAnims[practice.id].interpolate({
-              inputRange: [0, 1],
-              outputRange: ['0%', '100%'],
-            });
-            const cardAnim = cardAnims[index];
-            const cardStyle = {
-              opacity: cardAnim,
-              transform: [
-                {
-                  translateY: cardAnim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [16, 0],
-                  }),
-                },
-              ],
-            };
+          {/* Wind-Down Practices */}
+          <View style={{ gap: 16 }}>
+            <Text
+              style={{
+                fontSize: 10,
+                fontWeight: '600',
+                letterSpacing: 1.0,
+                color: C.restore,
+                textTransform: 'uppercase',
+              }}
+            >
+              Wind-Down Practices
+            </Text>
 
-            const buttonLabel = isActive ? 'Active' : 'Begin';
+            {WIND_DOWN_PRACTICES.map((practice, index) => {
+              const isActive = activeTimer === practice.id;
+              const progressWidth = progressAnims[practice.id].interpolate({
+                inputRange: [0, 1],
+                outputRange: ['0%', '100%'],
+              });
+              const cardAnim = cardAnims[index];
+              const cardStyle = {
+                opacity: cardAnim,
+                transform: [
+                  {
+                    translateY: cardAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [12, 0],
+                    }),
+                  },
+                ],
+              };
 
-            return (
-              <Animated.View key={practice.id} style={cardStyle}>
-                <AnimatedPressable
-                  onPress={() => {
-                    if (!isActive) startPractice(practice);
-                  }}
-                >
-                  <View
-                    style={{
-                      backgroundColor: isActive ? 'rgba(123,158,168,0.12)' : 'rgba(123,158,168,0.08)',
-                      borderRadius: 16,
-                      borderCurve: 'continuous',
-                      padding: 20,
-                      borderWidth: 1,
-                      borderColor: isActive ? C.restore + '50' : C.border,
-                      borderLeftWidth: 3,
-                      borderLeftColor: C.restore,
-                      boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03)',
-                      gap: 10,
-                    } as any}
+              const buttonLabel = isActive ? 'Active' : 'Begin';
+
+              return (
+                <Animated.View key={practice.id} style={cardStyle}>
+                  <AnimatedPressable
+                    onPress={() => {
+                      if (!isActive) startPractice(practice);
+                    }}
                   >
-                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
-                        <Text style={{ fontSize: 28, lineHeight: 34 }}>{practice.emoji}</Text>
-                        <View style={{ flex: 1, gap: 2 }}>
+                    <View
+                      style={{
+                        backgroundColor: isActive ? C.restoreMuted : C.surface,
+                        borderRadius: 4,
+                        padding: 20,
+                        borderWidth: 1,
+                        borderColor: isActive ? C.restore + '40' : C.border,
+                        borderLeftWidth: 2,
+                        borderLeftColor: C.restore,
+                        boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+                        gap: 12,
+                      } as any}
+                    >
+                      <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                        <View style={{ flex: 1, gap: 3, paddingRight: 12 }}>
                           <Text
                             style={{
-                              fontSize: 17,
-                              fontFamily: 'Lora_700Bold',
+                              fontSize: 18,
+                              fontFamily: 'PlayfairDisplay_700Bold',
                               color: C.text,
                               letterSpacing: -0.1,
                             }}
                           >
                             {practice.title}
                           </Text>
-                          <Text style={{ fontSize: 13, color: C.textSecondary }}>
+                          <Text
+                            style={{
+                              fontSize: 11,
+                              fontWeight: '600',
+                              color: C.restore,
+                              letterSpacing: 0.8,
+                              textTransform: 'uppercase',
+                            }}
+                          >
                             {practice.duration}
                           </Text>
                         </View>
-                      </View>
-                      <View
-                        style={{
-                          borderWidth: 1.5,
-                          borderColor: C.restore,
-                          borderRadius: 8,
-                          paddingHorizontal: 12,
-                          paddingVertical: 5,
-                          backgroundColor: 'transparent',
-                        }}
-                      >
-                        <Text style={{ fontSize: 12, fontWeight: '600', color: C.restore }}>
-                          {buttonLabel}
-                        </Text>
-                      </View>
-                    </View>
-
-                    <Text style={{ fontSize: 14, color: C.textSecondary, lineHeight: 20 }}>
-                      {practice.description}
-                    </Text>
-
-                    {isActive && (
-                      <View style={{ gap: 8 }}>
+                        {/* Outlined begin button */}
                         <View
                           style={{
-                            height: 4,
-                            backgroundColor: C.restoreMuted,
+                            borderWidth: 1,
+                            borderColor: isActive ? C.restore : C.border,
                             borderRadius: 2,
-                            overflow: 'hidden',
+                            paddingHorizontal: 12,
+                            paddingVertical: 6,
+                            backgroundColor: 'transparent',
                           }}
                         >
-                          <Animated.View
-                            style={{
-                              height: '100%',
-                              width: progressWidth,
-                              backgroundColor: C.restore,
-                              borderRadius: 2,
-                            }}
-                          />
-                        </View>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                           <Text
                             style={{
-                              fontSize: 22,
-                              fontFamily: 'Lora_700Bold',
-                              color: C.restore,
-                              letterSpacing: -0.3,
+                              fontSize: 10,
+                              fontWeight: '600',
+                              color: isActive ? C.restore : C.textSecondary,
+                              letterSpacing: 1.0,
+                              textTransform: 'uppercase',
                             }}
                           >
-                            {timeString}
+                            {buttonLabel}
                           </Text>
-                          <AnimatedPressable onPress={stopPractice}>
-                            <View
-                              style={{
-                                paddingHorizontal: 16,
-                                paddingVertical: 8,
-                                borderRadius: 10,
-                                backgroundColor: C.surfaceSecondary,
-                              }}
-                            >
-                              <Text style={{ fontSize: 14, fontWeight: '600', color: C.textSecondary }}>
-                                Stop
-                              </Text>
-                            </View>
-                          </AnimatedPressable>
                         </View>
                       </View>
-                    )}
-                  </View>
-                </AnimatedPressable>
-              </Animated.View>
-            );
-          })}
-        </View>
 
-        {/* Closing Thought — atmospheric */}
-        <View
-          style={{
-            paddingVertical: 40,
-            paddingHorizontal: 32,
-            alignItems: 'center',
-            gap: 16,
-          }}
-        >
-          {/* Thin divider */}
+                      <Text style={{ fontSize: 14, color: C.textSecondary, lineHeight: 20 }}>
+                        {practice.description}
+                      </Text>
+
+                      {isActive && (
+                        <View style={{ gap: 10 }}>
+                          <View
+                            style={{
+                              height: 2,
+                              backgroundColor: C.restoreMuted,
+                              overflow: 'hidden',
+                            }}
+                          >
+                            <Animated.View
+                              style={{
+                                height: '100%',
+                                width: progressWidth,
+                                backgroundColor: C.restore,
+                              }}
+                            />
+                          </View>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <Text
+                              style={{
+                                fontSize: 28,
+                                fontFamily: 'PlayfairDisplay_700Bold',
+                                color: C.restore,
+                                letterSpacing: -0.3,
+                              }}
+                            >
+                              {timeString}
+                            </Text>
+                            <AnimatedPressable onPress={stopPractice}>
+                              <View
+                                style={{
+                                  paddingHorizontal: 16,
+                                  paddingVertical: 8,
+                                  borderRadius: 2,
+                                  borderWidth: 1,
+                                  borderColor: C.border,
+                                  backgroundColor: C.surfaceSecondary,
+                                }}
+                              >
+                                <Text
+                                  style={{
+                                    fontSize: 10,
+                                    fontWeight: '600',
+                                    color: C.textSecondary,
+                                    letterSpacing: 1.0,
+                                    textTransform: 'uppercase',
+                                  }}
+                                >
+                                  Stop
+                                </Text>
+                              </View>
+                            </AnimatedPressable>
+                          </View>
+                        </View>
+                      )}
+                    </View>
+                  </AnimatedPressable>
+                </Animated.View>
+              );
+            })}
+          </View>
+
+          {/* Closing Thought — editorial pull quote */}
           <View
             style={{
-              width: 60,
-              height: 1,
-              backgroundColor: C.divider,
-              marginBottom: 8,
-            }}
-          />
-          <Text
-            style={{
-              fontSize: 18,
-              fontFamily: 'Lora_400Regular_Italic',
-              color: C.textSecondary,
-              textAlign: 'center',
-              lineHeight: 28,
+              paddingVertical: 40,
+              alignItems: 'flex-start',
+              gap: 16,
             }}
           >
-            {closingQuote}
-          </Text>
-          <Text style={{ fontSize: 22, lineHeight: 28 }}>🌙</Text>
+            <View style={{ width: 32, height: 1, backgroundColor: C.restore + '60' }} />
+            <Text
+              style={{
+                fontSize: 20,
+                fontFamily: 'PlayfairDisplay_400Regular_Italic',
+                color: C.textSecondary,
+                lineHeight: 30,
+              }}
+            >
+              {`"${closingThought}"`}
+            </Text>
+          </View>
         </View>
       </ScrollView>
     </Animated.View>

@@ -1,60 +1,67 @@
 export const COLORS = {
   // Backgrounds
-  background: '#F7F4EF',
+  background: '#F7F5F0',
   surface: '#FFFFFF',
-  surfaceSecondary: '#EDE9E2',
-  surfaceTertiary: '#E5DFD5',
+  surfaceSecondary: '#F0EDE6',
+  surfaceTertiary: '#E8E4DC',
 
   // Text
-  text: '#1C1917',
-  textSecondary: '#78716C',
-  textTertiary: '#A8A29E',
+  text: '#1A1814',
+  textSecondary: '#6B6560',
+  textTertiary: '#A8A39C',
 
-  // Brand — earthy sage
-  primary: '#5C7A5C',
-  primaryMuted: 'rgba(92,122,92,0.10)',
-  primaryLight: '#8FAF8F',
+  // Primary — editorial ink
+  primary: '#2C2C2C',
+  primaryMuted: 'rgba(44,44,44,0.07)',
 
-  // Accents per pillar
+  // Accent — warm tobacco/tan
+  accent: '#8B6F47',
+  accentMuted: 'rgba(139,111,71,0.10)',
+
+  // Pillar accents (kept for pillar-specific UI)
+  arrive: '#8B6F47',
+  arriveMuted: 'rgba(139,111,71,0.10)',
+  breathe: '#5C7A8A',
+  breatheMuted: 'rgba(92,122,138,0.10)',
+  restore: '#6B7B8A',
+  restoreMuted: 'rgba(107,123,138,0.10)',
+
+  // Utility
+  border: 'rgba(26,24,20,0.08)',
+  divider: 'rgba(26,24,20,0.05)',
+  danger: '#C0392B',
+  warning: '#D4A017',
+  success: '#2D6A4F',
+};
+
+export const DARK_COLORS = {
+  background: '#141210',
+  surface: '#1E1B18',
+  surfaceSecondary: '#252220',
+  surfaceTertiary: '#2E2A26',
+
+  text: '#F0EDE6',
+  textSecondary: '#9C9690',
+  textTertiary: '#6B6560',
+
+  primary: '#F0EDE6',
+  primaryMuted: 'rgba(240,237,230,0.07)',
+
+  accent: '#C4956A',
+  accentMuted: 'rgba(196,149,106,0.12)',
+
   arrive: '#C4956A',
   arriveMuted: 'rgba(196,149,106,0.12)',
   breathe: '#7BA7BC',
   breatheMuted: 'rgba(123,167,188,0.12)',
-  restore: '#7B9EA8',
-  restoreMuted: 'rgba(123,158,168,0.12)',
-
-  // Utility
-  border: 'rgba(28,25,23,0.08)',
-  divider: 'rgba(28,25,23,0.05)',
-  danger: '#DC2626',
-  success: '#16A34A',
-};
-
-export const DARK_COLORS = {
-  background: '#1A1714',
-  surface: '#242018',
-  surfaceSecondary: '#2E2A24',
-  surfaceTertiary: '#38332C',
-
-  text: '#F0EDE8',
-  textSecondary: '#A8A29E',
-  textTertiary: '#78716C',
-
-  primary: '#8FAF8F',
-  primaryMuted: 'rgba(143,175,143,0.12)',
-  primaryLight: '#5C7A5C',
-
-  arrive: '#D4A574',
-  arriveMuted: 'rgba(212,165,116,0.15)',
-  breathe: '#8BBDD0',
-  breatheMuted: 'rgba(139,189,208,0.15)',
   restore: '#8BAEBB',
-  restoreMuted: 'rgba(139,174,187,0.15)',
+  restoreMuted: 'rgba(139,174,187,0.12)',
 
-  border: 'rgba(240,237,232,0.08)',
-  divider: 'rgba(240,237,232,0.05)',
-  danger: '#EF4444',
-  success: '#22C55E',
+  border: 'rgba(240,237,230,0.07)',
+  divider: 'rgba(240,237,230,0.04)',
+  danger: '#E05C4B',
+  warning: '#D4A017',
+  success: '#52B788',
 };
 
 // Legacy exports for compatibility
@@ -62,17 +69,34 @@ export const Colors = {
   light: {
     text: COLORS.text,
     background: COLORS.background,
-    tint: COLORS.primary,
+    tint: COLORS.accent,
     icon: COLORS.textSecondary,
     tabIconDefault: COLORS.textSecondary,
-    tabIconSelected: COLORS.primary,
+    tabIconSelected: COLORS.accent,
   },
   dark: {
     text: DARK_COLORS.text,
     background: DARK_COLORS.background,
-    tint: DARK_COLORS.primary,
+    tint: DARK_COLORS.accent,
     icon: DARK_COLORS.textSecondary,
     tabIconDefault: DARK_COLORS.textSecondary,
-    tabIconSelected: DARK_COLORS.primary,
+    tabIconSelected: DARK_COLORS.accent,
   },
+};
+
+// Legacy named exports used by button.tsx / ListItem.tsx
+export const appleBlue = COLORS.accent;
+export const appleRed = COLORS.danger;
+export const borderColor = COLORS.border;
+export const zincColors = {
+  50: '#F0EDE6',
+  100: '#E8E4DC',
+  200: '#D8D3C8',
+  300: 'rgba(26,24,20,0.20)',
+  400: '#A8A39C',
+  500: '#6B6560',
+  600: '#4A4540',
+  700: 'rgba(240,237,230,0.15)',
+  800: '#2C2C2C',
+  900: '#1A1814',
 };

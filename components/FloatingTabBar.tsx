@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   View,
@@ -21,7 +20,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Href } from 'expo-router';
-import { COLORS } from '@/constants/Colors';
+import { COLORS, DARK_COLORS } from '@/constants/Colors';
+import { useColorScheme } from 'react-native';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -39,24 +39,28 @@ interface FloatingTabBarProps {
   bottomMargin?: number;
 }
 
-function getPillarColor(pathname: string): string {
-  if (pathname.includes('breathe')) return COLORS.breathe;
-  if (pathname.includes('restore')) return COLORS.restore;
-  return COLORS.arrive;
+function getPillarAccent(pathname: string, isDark: boolean): string {
+  const C = isDark ? DARK_COLORS : COLORS;
+  if (pathname.includes('breathe')) return C.breathe;
+  if (pathname.includes('restore')) return C.restore;
+  return C.arrive;
 }
 
 export default function FloatingTabBar({
   tabs,
-  containerWidth = screenWidth * 0.95,
-  borderRadius = 35,
+  containerWidth = screenWidth - 32,
+  borderRadius = 4,
   bottomMargin,
 }: FloatingTabBarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const theme = useTheme();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+  const C = isDark ? DARK_COLORS : COLORS;
   const animatedValue = useSharedValue(0);
 
-  const activeColor = getPillarColor(pathname);
+  const activeAccent = getPillarAccent(pathname, isDark);
 
   const activeTabIndex = React.useMemo(() => {
     let bestMatch = -1;
@@ -64,7 +68,6 @@ export default function FloatingTabBar({
 
     tabs.forEach((tab, index) => {
       let score = 0;
-
       if (pathname === tab.route) {
         score = 100;
       } else if (pathname.startsWith(tab.route as string)) {
@@ -77,7 +80,6 @@ export default function FloatingTabBar({
       ) {
         score = 40;
       }
-
       if (score > bestMatchScore) {
         bestMatchScore = score;
         bestMatch = index;
@@ -90,9 +92,9 @@ export default function FloatingTabBar({
   React.useEffect(() => {
     if (activeTabIndex >= 0) {
       animatedValue.value = withSpring(activeTabIndex, {
-        damping: 20,
-        stiffness: 120,
-        mass: 1,
+        damping: 24,
+        stiffness: 140,
+        mass: 0.8,
       });
     }
   }, [activeTabIndex, animatedValue]);
@@ -119,41 +121,14 @@ export default function FloatingTabBar({
     };
   });
 
-  const dynamicStyles = {
-    blurContainer: {
-      ...styles.blurContainer,
-      borderWidth: 1.2,
-      borderColor: 'rgba(255, 255, 255, 1)',
-      ...Platform.select({
-        ios: {
-          backgroundColor: theme.dark
-            ? 'rgba(28, 28, 30, 0.8)'
-            : 'rgba(255, 255, 255, 0.6)',
-        },
-        android: {
-          backgroundColor: theme.dark
-            ? 'rgba(28, 28, 30, 0.95)'
-            : 'rgba(255, 255, 255, 0.6)',
-        },
-        web: {
-          backgroundColor: theme.dark
-            ? 'rgba(28, 28, 30, 0.95)'
-            : 'rgba(255, 255, 255, 0.6)',
-          backdropFilter: 'blur(10px)',
-        },
-      }),
-    },
-    background: {
-      ...styles.background,
-    },
-    indicator: {
-      ...styles.indicator,
-      backgroundColor: theme.dark
-        ? 'rgba(255, 255, 255, 0.08)'
-        : 'rgba(0, 0, 0, 0.04)',
-      width: `${tabWidthPercent}%` as `${number}%`,
-    },
-  };
+  // Editorial tab bar: warm parchment bg, thin border, sharp corners
+  const barBg = isDark
+    ? 'rgba(30,27,24,0.96)'
+    : 'rgba(247,245,240,0.96)';
+
+  const barBorder = isDark
+    ? 'rgba(240,237,230,0.10)'
+    : 'rgba(26,24,20,0.10)';
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['bottom']}>
@@ -162,29 +137,50 @@ export default function FloatingTabBar({
           styles.container,
           {
             width: containerWidth,
-            marginBottom: bottomMargin ?? 20,
+            marginBottom: bottomMargin ?? 16,
           },
         ]}
       >
         <BlurView
-          intensity={80}
-          style={[dynamicStyles.blurContainer, { borderRadius }]}
+          intensity={60}
+          tint={isDark ? 'dark' : 'light'}
+          style={[
+            styles.blurContainer,
+            {
+              borderRadius,
+              borderWidth: 1,
+              borderColor: barBorder,
+              ...Platform.select({
+                ios: { backgroundColor: barBg },
+                android: { backgroundColor: isDark ? 'rgba(30,27,24,0.98)' : 'rgba(247,245,240,0.98)' },
+                web: {
+                  backgroundColor: barBg,
+                  backdropFilter: 'blur(12px)',
+                } as any,
+              }),
+            },
+          ]}
         >
-          <View style={dynamicStyles.background} />
-          <Animated.View style={[dynamicStyles.indicator, indicatorStyle]} />
+          {/* Sliding indicator — subtle tinted bg */}
+          <Animated.View
+            style={[
+              styles.indicator,
+              {
+                backgroundColor: isDark
+                  ? 'rgba(240,237,230,0.06)'
+                  : 'rgba(26,24,20,0.05)',
+                width: `${tabWidthPercent}%` as `${number}%`,
+                borderRadius: 2,
+              },
+              indicatorStyle,
+            ]}
+          />
+
           <View style={styles.tabsContainer}>
             {tabs.map((tab, index) => {
               const isActive = activeTabIndex === index;
-              const iconColor = isActive
-                ? activeColor
-                : theme.dark
-                ? '#98989D'
-                : '#000000';
-              const labelColor = isActive
-                ? activeColor
-                : theme.dark
-                ? '#98989D'
-                : '#8E8E93';
+              const iconColor = isActive ? activeAccent : C.textTertiary;
+              const labelColor = isActive ? activeAccent : C.textTertiary;
 
               return (
                 <React.Fragment key={index}>
@@ -202,20 +198,20 @@ export default function FloatingTabBar({
                       <IconSymbol
                         android_material_icon_name={tab.android_material_icon_name}
                         ios_icon_name={tab.ios_icon_name}
-                        size={24}
+                        size={22}
                         color={iconColor}
                       />
                       <Text
                         style={[
                           styles.tabLabel,
                           { color: labelColor },
-                          isActive && { fontWeight: '600' },
+                          isActive && { fontWeight: '600', color: activeAccent },
                         ]}
                         numberOfLines={1}
                         adjustsFontSizeToFit={true}
                         minimumFontScale={0.8}
                       >
-                        {tab.name}
+                        {tab.name.toUpperCase()}
                       </Text>
                     </View>
                   </TouchableOpacity>
@@ -239,29 +235,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   container: {
-    marginHorizontal: 10,
+    marginHorizontal: 16,
     alignSelf: 'center',
   },
   blurContainer: {
     overflow: 'hidden',
   },
-  background: {
-    ...StyleSheet.absoluteFillObject,
-  },
   indicator: {
     position: 'absolute',
     top: 4,
-    left: 2,
+    left: 4,
     bottom: 4,
-    borderRadius: 27,
-    width: `${(100 / 2) - 1}%`,
   },
   tabsContainer: {
     flexDirection: 'row',
-    height: 70,
+    height: 64,
     alignItems: 'center',
-    paddingHorizontal: 8,
-    gap: 4,
+    paddingHorizontal: 4,
+    gap: 0,
   },
   tab: {
     flex: 1,
@@ -273,12 +264,12 @@ const styles = StyleSheet.create({
   tabContent: {
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 4,
+    gap: 3,
   },
   tabLabel: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '500',
-    marginTop: 2,
+    letterSpacing: 1.0,
     textAlign: 'center',
   },
 });
