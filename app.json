@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "LivDaily",
-    "slug": "LivDaily",
+    "slug": "livdaily",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/liv icon.PNG",
@@ -54,7 +54,7 @@
       "expo-router",
       "expo-web-browser"
     ],
-    "scheme": "LivDaily",
+    "scheme": "livdaily",
     "experiments": {
       "typedRoutes": true
     },
